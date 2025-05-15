@@ -4,6 +4,7 @@ export interface Place {
   lat: number
   lng: number
   category: string
+  description: string
 }
 
 export const usePlacesService = () => {
