@@ -31,7 +31,7 @@
       </div>
 
       <div v-if="filteredPlaces.length === 0" class="text-center text-gray-500 my-8">
-        No places found matching your filters.
+        No places found matching your filters. TEST
       </div>
 
       <ul v-else class="places-list">
