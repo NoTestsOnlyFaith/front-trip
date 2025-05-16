@@ -46,7 +46,25 @@
 
       <div v-else>
         <div class="places-list">
-          <div v-for="(place, index) in trip.places" :key="place.id" class="place-item">
+          <div
+              v-for="(place, index) in trip.places"
+              :key="place.id"
+              class="place-item"
+              draggable="true"
+              @dragstart="dragStart($event, index)"
+              @dragend="draggedIndex = -1"
+              @dragover.prevent
+              @dragenter.prevent="dragEnter($event, index)"
+              @dragleave="dragLeave($event, index)"
+              @drop="drop($event, index)"
+              :class="{
+              'dragging': draggedIndex === index,
+              'drop-target': draggedIndex !== -1 && draggedIndex !== index && dropTargetIndex === index
+            }"
+          >
+            <div class="drag-handle">
+              <UIcon name="i-heroicons-bars-3" class="text-gray-400" />
+            </div>
             <NuxtLink :to="`/places/${place.id}`" class="place-card hover:no-underline">
               <h3 class="text-lg font-semibold text-primary mb-2">{{ place.name }}</h3>
               <div class="place-details">
@@ -97,6 +115,8 @@ const { data: trip, pending, error } = await getTripById(tripId);
 const isEditingName = ref(false);
 const editedName = ref('');
 const isSaving = ref(false);
+const draggedIndex = ref(-1);
+const dropTargetIndex = ref(-1);
 
 const startEditName = () => {
   if (trip.value) {
@@ -149,6 +169,66 @@ const formatDate = (dateString: string) => {
     day: 'numeric'
   });
 };
+
+// Drag and drop functionality
+const dragStart = (event: DragEvent, index: number) => {
+  draggedIndex.value = index;
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = 'move';
+    // Set some data (required for Firefox)
+    event.dataTransfer.setData('text/plain', index.toString());
+  }
+};
+
+const dragEnter = (event: DragEvent, index: number) => {
+  if (draggedIndex.value !== -1 && draggedIndex.value !== index) {
+    dropTargetIndex.value = index;
+  }
+};
+
+const dragLeave = (event: DragEvent, index: number) => {
+  if (dropTargetIndex.value === index) {
+    dropTargetIndex.value = -1;
+  }
+};
+
+const drop = async (event: DragEvent, dropIndex: number) => {
+  event.preventDefault();
+
+  // Reset drop target index
+  dropTargetIndex.value = -1;
+
+  // If no item is being dragged or trying to drop at the same position
+  if (draggedIndex.value === -1 || draggedIndex.value === dropIndex) {
+    draggedIndex.value = -1;
+    return;
+  }
+
+  if (trip.value) {
+    // Create a copy of the places array
+    const updatedPlaces = [...trip.value.places];
+
+    // Remove the dragged item
+    const [draggedItem] = updatedPlaces.splice(draggedIndex.value, 1);
+
+    // Insert it at the drop position
+    updatedPlaces.splice(dropIndex, 0, draggedItem);
+
+    // Update the trip with the new places order
+    try {
+      await updateTrip(trip.value.id, { places: updatedPlaces });
+
+      // Update the local trip object to reflect the changes
+      trip.value.places = updatedPlaces;
+
+      // Reset the dragged index
+      draggedIndex.value = -1;
+    } catch (err) {
+      console.error('Error updating trip places order:', err);
+      // Show error message if needed
+    }
+  }
+};
 </script>
 
 <style scoped>
@@ -162,12 +242,69 @@ const formatDate = (dateString: string) => {
   display: flex;
   flex-direction: column;
   margin-top: 16px;
+  padding-left: 40px; /* Add padding to accommodate drag handles */
+  position: relative;
 }
 
 .place-item {
   display: flex;
   flex-direction: column;
   align-items: center;
+  position: relative;
+  cursor: grab;
+  transition: background-color 0.2s, transform 0.2s, box-shadow 0.2s;
+  margin-bottom: 8px;
+}
+
+.place-item.dragging {
+  opacity: 0.6;
+  background-color: #f0f9ff;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  cursor: grabbing;
+}
+
+.place-item.drop-target {
+  background-color: #f0f9ff;
+  border-top: 2px dashed #3b82f6;
+  border-bottom: 2px dashed #3b82f6;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  position: relative;
+  z-index: 1;
+}
+
+.place-item.drop-target::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 8px solid #3b82f6;
+}
+
+.drag-handle {
+  position: absolute;
+  left: -30px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: grab;
+  padding: 8px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.place-item:hover .drag-handle {
+  background-color: #f3f4f6;
+}
+
+.place-item.dragging .drag-handle {
+  cursor: grabbing;
 }
 
 .place-card {
