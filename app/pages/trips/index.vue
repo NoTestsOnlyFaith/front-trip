@@ -122,6 +122,10 @@ const deleteSelectedTrip = async () => {
   max-width: 900px;
   margin: 0 auto;
   padding: 32px 16px;
+  color: #f3f4f6;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(0, 220, 130, 0.1);
+  border: 1px solid rgba(0, 220, 130, 0.15);
 }
 
 .trips-list {
@@ -131,17 +135,17 @@ const deleteSelectedTrip = async () => {
 }
 
 .trip-item {
-  border: 1px solid #e5e7eb;
+  border: 1px solid rgba(0, 220, 130, 0.15);
   border-radius: 10px;
   margin-bottom: 20px;
   transition: box-shadow 0.2s, transform 0.2s;
-  box-shadow: 0 1px 3px 0 rgba(0,0,0,0.03);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
 }
 
 .trip-item:hover {
   transform: translateY(-2px) scale(1.01);
-  box-shadow: 0 6px 18px rgba(0, 80, 180, 0.08);
-  border-color: #3b82f6;
+  box-shadow: 0 6px 18px rgba(0, 220, 130, 0.1);
+  border-color: rgba(0, 220, 130, 0.4);
 }
 
 .trip-item a {
@@ -157,29 +161,29 @@ const deleteSelectedTrip = async () => {
   align-items: center;
   margin-top: 6px;
   font-size: 0.97rem;
-  color: #555;
+  color: #a3a3a3;
 }
 
 .places-count {
   text-transform: capitalize;
-  background-color: #f1f5f9;
-  color: #2563eb;
   padding: 3px 12px;
   border-radius: 12px;
   font-weight: 500;
   font-size: 0.95em;
+  border: 1px solid rgba(0, 220, 130, 0.3);
+  color: rgba(0, 220, 130, 0.8);
 }
 
 .created-at {
   font-family: 'Fira Mono', 'Menlo', 'Monaco', monospace;
-  background: #f3f4f6;
   padding: 2px 8px;
   border-radius: 8px;
-  color: #64748b;
+  color: #a3a3a3;
+  border: 1px solid #333333;
 }
 
 .trip-actions {
-  margin-top: 10px;
+  padding: 0 24px 12px;
   text-align: right;
 }
 
@@ -194,22 +198,24 @@ const deleteSelectedTrip = async () => {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.7);
+  background-color: rgba(0, 0, 0, 0.8);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 50;
   padding: 1rem;
+  backdrop-filter: blur(3px);
 }
 
 .modal-content {
-  background-color: white;
   border-radius: 0.5rem;
   padding: 1.5rem;
   width: 100%;
   max-width: 500px;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(0, 220, 130, 0.1);
   animation: modal-in 0.2s ease-out;
+  color: #f3f4f6;
+  border: 1px solid rgba(0, 220, 130, 0.15);
 }
 
 @keyframes modal-in {

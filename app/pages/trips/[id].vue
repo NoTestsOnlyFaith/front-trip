@@ -318,6 +318,14 @@ const deleteTrip = async () => {
   max-width: 900px;
   margin: 0 auto;
   padding: 32px 16px;
+  color: #f3f4f6;
+}
+
+.trip-detail-container > div:not(.modal-overlay) {
+  border-radius: 0.5rem;
+  border: 1px solid rgba(0, 220, 130, 0.15);
+  padding: 1.5rem;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(0, 220, 130, 0.1);
 }
 
 .places-list {
@@ -334,21 +342,20 @@ const deleteTrip = async () => {
   align-items: center;
   position: relative;
   cursor: grab;
-  transition: background-color 0.2s, transform 0.2s, box-shadow 0.2s;
-  margin-bottom: 8px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  margin-bottom: 16px;
+  border-radius: 8px;
 }
 
 .place-item.dragging {
-  opacity: 0.6;
-  background-color: #f0f9ff;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  opacity: 0.7;
+  border-color: rgba(0, 220, 130, 0.5);
   cursor: grabbing;
 }
 
 .place-item.drop-target {
-  background-color: #f0f9ff;
-  border-top: 2px dashed #3b82f6;
-  border-bottom: 2px dashed #3b82f6;
+  border-top: 2px dashed rgba(0, 220, 130, 0.6);
+  border-bottom: 2px dashed rgba(0, 220, 130, 0.6);
   padding-top: 4px;
   padding-bottom: 4px;
   position: relative;
@@ -365,7 +372,7 @@ const deleteTrip = async () => {
   height: 0;
   border-left: 8px solid transparent;
   border-right: 8px solid transparent;
-  border-top: 8px solid #3b82f6;
+  border-top: 8px solid rgba(0, 220, 130, 0.6);
 }
 
 .drag-handle {
@@ -379,10 +386,11 @@ const deleteTrip = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
+  color: rgba(0, 220, 130, 0.6);
 }
 
 .place-item:hover .drag-handle {
-  background-color: #f3f4f6;
+  color: rgba(0, 220, 130, 0.8);
 }
 
 .place-item.dragging .drag-handle {
@@ -390,19 +398,19 @@ const deleteTrip = async () => {
 }
 
 .place-card {
-  border: 1px solid #e5e7eb;
+  border: 1px solid rgba(0, 220, 130, 0.15);
   border-radius: 10px;
   padding: 16px;
   transition: box-shadow 0.2s, transform 0.2s;
-  box-shadow: 0 1px 3px 0 rgba(0,0,0,0.03);
+  box-shadow: 0 1px 3px 0 rgba(0,0,0,0.1);
   width: 100%;
   display: block;
 }
 
 .place-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(0, 80, 180, 0.08);
-  border-color: #3b82f6;
+  box-shadow: 0 6px 18px rgba(0, 220, 130, 0.1);
+  border-color: rgba(0, 220, 130, 0.4);
 }
 
 .place-details {
@@ -415,20 +423,20 @@ const deleteTrip = async () => {
 
 .category {
   text-transform: capitalize;
-  background-color: #f1f5f9;
-  color: #2563eb;
   padding: 3px 12px;
   border-radius: 12px;
   font-weight: 500;
   font-size: 0.9em;
+  border: 1px solid rgba(0, 220, 130, 0.3);
+  color: rgba(0, 220, 130, 0.8);
 }
 
 .coordinates {
   font-family: 'Fira Mono', 'Menlo', 'Monaco', monospace;
-  background: #f3f4f6;
   padding: 2px 8px;
   border-radius: 8px;
-  color: #64748b;
+  color: #a3a3a3;
+  border: 1px solid #333333;
   font-size: 0.85em;
 }
 
@@ -444,18 +452,17 @@ const deleteTrip = async () => {
 .distance-line {
   height: 20px;
   width: 2px;
-  background-color: #e5e7eb;
+  background-color: rgba(0, 220, 130, 0.2);
 }
 
 .distance-badge {
-  background-color: #dbeafe;
-  color: #2563eb;
   padding: 4px 12px;
   border-radius: 16px;
   font-size: 0.85rem;
   font-weight: 500;
   margin: 8px 0;
-  border: 1px solid #bfdbfe;
+  border: 1px solid rgba(0, 220, 130, 0.3);
+  color: rgba(0, 220, 130, 0.8);
 }
 
 /* Modal styles */
@@ -465,22 +472,24 @@ const deleteTrip = async () => {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.7);
+  background-color: rgba(0, 0, 0, 0.8);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 50;
   padding: 1rem;
+  backdrop-filter: blur(3px);
 }
 
 .modal-content {
-  background-color: white;
   border-radius: 0.5rem;
   padding: 1.5rem;
   width: 100%;
   max-width: 500px;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(0, 220, 130, 0.1);
   animation: modal-in 0.2s ease-out;
+  color: #f3f4f6;
+  border: 1px solid rgba(0, 220, 130, 0.15);
 }
 
 @keyframes modal-in {
@@ -492,5 +501,11 @@ const deleteTrip = async () => {
     opacity: 1;
     transform: translateY(0) scale(1);
   }
+}
+
+.trip-meta {
+  border-bottom: 1px solid rgba(0, 220, 130, 0.15);
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
 }
 </style>
