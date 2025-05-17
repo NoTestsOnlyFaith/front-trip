@@ -2,7 +2,7 @@
   <div class="trips-container">
     <h1 class="text-3xl font-bold text-primary mb-8 text-center">My Trips</h1>
 
-    <div v-if="pending" class="text-center text-gray-500">Loading trips...</div>
+    <PageLoading v-if="pending">Loading trips...</PageLoading>
     <div v-else-if="error" class="text-center text-red-500">Error: {{ error.message }}</div>
     <div v-else>
       <div class="mb-6 flex justify-between items-center">
@@ -44,23 +44,17 @@
       </ul>
     </div>
 
-    <!-- Custom Delete Trip Modal -->
-    <div v-if="isDeleteModalOpen" class="modal-overlay" @click="isDeleteModalOpen = false">
-      <div class="modal-content" @click.stop>
-        <h3 class="text-xl font-semibold mb-3">Delete Trip</h3>
-        <p class="mb-5" v-if="tripToDelete">Are you sure you want to delete "{{ tripToDelete.name }}"? This action cannot be undone.</p>
-        <div class="flex justify-end gap-3">
-          <UButton @click="isDeleteModalOpen = false" variant="outline">Cancel</UButton>
-          <UButton
-            color="red"
-            :loading="isDeleting"
-            @click="deleteSelectedTrip"
-          >
-            Delete
-          </UButton>
-        </div>
-      </div>
-    </div>
+    <!-- Delete Trip Confirmation Modal -->
+    <ConfirmationModal
+      :is-open="isDeleteModalOpen"
+      title="Delete Trip"
+      :message="tripToDelete ? `Are you sure you want to delete ${tripToDelete.name}? This action cannot be undone.` : ''"
+      confirm-button-text="Delete"
+      confirm-button-color="red"
+      :is-loading="isDeleting"
+      @close="isDeleteModalOpen = false"
+      @confirm="deleteSelectedTrip"
+    />
   </div>
 </template>
 
@@ -68,6 +62,8 @@
 import { useTripsService } from '../../services/tripsService';
 import { useAuthService } from '../../services/authService';
 import { onMounted, ref } from 'vue';
+import PageLoading from '../../components/PageLoading.vue';
+import ConfirmationModal from '../../components/ConfirmationModal.vue';
 
 const { isAuthenticated } = useAuthService();
 const { getTrips, deleteTrip } = useTripsService();

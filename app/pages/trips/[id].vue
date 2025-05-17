@@ -1,25 +1,15 @@
 <template>
   <div class="trip-detail-container">
-    <div v-if="pending" class="text-center text-gray-500">Loading trip details...</div>
+    <PageLoading v-if="pending">Loading trip details...</PageLoading>
     <div v-else-if="error" class="text-center text-red-500">Error: {{ error.message }}</div>
     <div v-else-if="trip">
       <div class="flex justify-between items-center mb-6">
-        <!-- Trip name (editable) -->
-        <div class="flex items-center gap-3">
-          <div v-if="isEditingName">
-            <div class="flex items-center gap-2">
-              <UInput v-model="editedName" class="text-2xl font-bold" />
-              <UButton @click="saveTripName" color="primary" size="sm" :loading="isSaving">
-                Save
-              </UButton>
-              <UButton @click="cancelEditName" variant="ghost" size="sm">
-                Cancel
-              </UButton>
-            </div>
-          </div>
-          <h1 v-else class="text-3xl font-bold text-primary">{{ trip.name }}</h1>
-          <UButton v-if="!isEditingName" @click="startEditName" variant="ghost" size="xs" icon="i-heroicons-pencil" class="text-gray-500" />
-        </div>
+        <EditableTitle
+          :title="trip.name"
+          :is-saving="isSaving"
+          :editable="true"
+          @save="saveTripName"
+        />
         <div class="flex gap-2">
           <UButton @click="isDeleteModalOpen = true" variant="soft" color="red" size="sm" icon="i-heroicons-trash">
             Delete Trip
@@ -49,46 +39,35 @@
 
       <div v-else>
         <div class="places-list">
-          <div
-              v-for="(place, index) in trip.places"
-              :key="place.id"
-              class="place-item"
-              draggable="true"
-              @dragstart="dragStart($event, index)"
-              @dragend="draggedIndex = -1"
-              @dragover.prevent
-              @dragenter.prevent="dragEnter($event, index)"
-              @dragleave="dragLeave($event, index)"
-              @drop="drop($event, index)"
-              :class="{
-              'dragging': draggedIndex === index,
-              'drop-target': draggedIndex !== -1 && draggedIndex !== index && dropTargetIndex === index
-            }"
+          <DraggablePlaceItem
+            v-for="(place, index) in trip.places"
+            :key="place.id"
+            :place="place"
+            :index="index"
+            :is-dragging="draggedIndex === index"
+            :is-drop-target="draggedIndex !== -1 && draggedIndex !== index && dropTargetIndex === index"
+            @dragstart="dragStart($event, index)"
+            @dragend="draggedIndex = -1"
+            @dragenter="dragEnter($event, index)"
+            @dragleave="dragLeave($event, index)"
+            @drop="drop($event, index)"
           >
-            <div class="drag-handle">
-              <UIcon name="i-heroicons-bars-3" class="text-gray-400" />
-            </div>
-            <NuxtLink :to="`/places/${place.id}`" class="place-card hover:no-underline">
-              <h3 class="text-lg font-semibold text-primary mb-2">{{ place.name }}</h3>
-              <div class="place-details">
-                <span class="category">{{ place.category }}</span>
-                <span class="coordinates">{{ place.lat.toFixed(4) }}, {{ place.lng.toFixed(4) }}</span>
-              </div>
-            </NuxtLink>
+            <template #actions>
+              <UButton @click="openRemovePlaceModal(place)" variant="soft" color="red" size="xs" icon="i-heroicons-trash">
+                Remove
+              </UButton>
+            </template>
 
-            <UButton @click="openRemovePlaceModal(place)" variant="soft" color="red" size="xs" icon="i-heroicons-trash">
-              Remove
-            </UButton>
-
-            <!-- Distance to next place -->
-            <div v-if="index < trip.places.length - 1" class="distance-indicator">
-              <div class="distance-line"></div>
-              <div class="distance-badge">
-                {{ formatDistance(getDistanceBetweenPlaces(place, trip.places[index + 1])) }}
+            <template #distance-indicator>
+              <div v-if="index < trip.places.length - 1" class="distance-indicator">
+                <div class="distance-line"></div>
+                <div class="distance-badge">
+                  {{ formatDistance(getDistanceBetweenPlaces(place, trip.places[index + 1])) }}
+                </div>
+                <div class="distance-line"></div>
               </div>
-              <div class="distance-line"></div>
-            </div>
-          </div>
+            </template>
+          </DraggablePlaceItem>
         </div>
       </div>
     </div>
@@ -97,32 +76,28 @@
     </div>
 
     <!-- Delete Trip Modal -->
-    <div v-if="isDeleteModalOpen" class="modal-overlay" @click="isDeleteModalOpen = false">
-      <div class="modal-content" @click.stop>
-        <h3 class="text-xl font-semibold mb-3">Delete Trip</h3>
-        <p class="mb-5" v-if="trip">Are you sure you want to delete "{{ trip.name }}"? This action cannot be undone.</p>
-        <div class="flex justify-end gap-3">
-          <UButton @click="isDeleteModalOpen = false" variant="outline">Cancel</UButton>
-          <UButton color="red" :loading="isDeleting" @click="deleteTrip">
-            Delete
-          </UButton>
-        </div>
-      </div>
-    </div>
+    <ConfirmationModal
+      :is-open="isDeleteModalOpen"
+      title="Delete Trip"
+      :message="trip ? `Are you sure you want to delete ${trip.name}? This action cannot be undone.` : ''"
+      confirm-button-text="Delete"
+      confirm-button-color="red"
+      :is-loading="isDeleting"
+      @close="isDeleteModalOpen = false"
+      @confirm="deleteTrip"
+    />
 
     <!-- Remove Place Modal -->
-    <div v-if="isRemovePlaceModalOpen" class="modal-overlay" @click="isRemovePlaceModalOpen = false">
-      <div class="modal-content" @click.stop>
-        <h3 class="text-xl font-semibold mb-3">Remove Place</h3>
-        <p class="mb-5" v-if="placeToRemove">Are you sure you want to remove "{{ placeToRemove.name }}" from this trip?</p>
-        <div class="flex justify-end gap-3">
-          <UButton @click="isRemovePlaceModalOpen = false" variant="outline">Cancel</UButton>
-          <UButton color="red" :loading="isRemovingPlace" @click="confirmRemovePlace">
-            Remove
-          </UButton>
-        </div>
-      </div>
-    </div>
+    <ConfirmationModal
+      :is-open="isRemovePlaceModalOpen"
+      title="Remove Place"
+      :message="placeToRemove ? `Are you sure you want to remove ${placeToRemove.name} from this trip?` : ''"
+      confirm-button-text="Remove"
+      confirm-button-color="red"
+      :is-loading="isRemovingPlace"
+      @close="isRemovePlaceModalOpen = false"
+      @confirm="confirmRemovePlace"
+    />
   </div>
 </template>
 
@@ -147,32 +122,16 @@ const tripId = route.params.id;
 const { data: trip, pending, error } = await getTripById(tripId);
 
 // Trip name editing
-const isEditingName = ref(false);
-const editedName = ref('');
 const isSaving = ref(false);
-const draggedIndex = ref(-1);
-const dropTargetIndex = ref(-1);
 
-const startEditName = () => {
-  if (trip.value) {
-    editedName.value = trip.value.name;
-    isEditingName.value = true;
-  }
-};
-
-const cancelEditName = () => {
-  isEditingName.value = false;
-};
-
-const saveTripName = async () => {
-  if (!trip.value || !editedName.value.trim()) return;
+const saveTripName = async (newName: string) => {
+  if (!trip.value) return;
 
   isSaving.value = true;
   try {
-    await updateTrip(trip.value.id, { name: editedName.value.trim() });
+    await updateTrip(trip.value.id, { name: newName });
     // Update the local trip object
-    trip.value.name = editedName.value.trim();
-    isEditingName.value = false;
+    trip.value.name = newName;
   } catch (err) {
     console.error('Error updating trip name:', err);
     // Show error message if needed
@@ -206,6 +165,9 @@ const formatDate = (dateString: string) => {
 };
 
 // Drag and drop functionality
+const draggedIndex = ref(-1);
+const dropTargetIndex = ref(-1);
+
 const dragStart = (event: DragEvent, index: number) => {
   draggedIndex.value = index;
   if (event.dataTransfer) {
