@@ -39,35 +39,30 @@
 
       <div v-else>
         <div class="places-list">
-          <DraggablePlaceItem
-            v-for="(place, index) in trip.places"
-            :key="place.id"
-            :place="place"
-            :index="index"
-            :is-dragging="draggedIndex === index"
-            :is-drop-target="draggedIndex !== -1 && draggedIndex !== index && dropTargetIndex === index"
-            @dragstart="dragStart($event, index)"
-            @dragend="draggedIndex = -1"
-            @dragenter="dragEnter($event, index)"
-            @dragleave="dragLeave($event, index)"
-            @drop="drop($event, index)"
-          >
-            <template #actions>
-              <UButton @click="openRemovePlaceModal(place)" variant="soft" color="red" size="xs" icon="i-heroicons-trash">
-                Remove
-              </UButton>
-            </template>
+          <template v-for="(place, index) in trip.places" :key="place.id">
+            <DraggablePlaceItem
+              :place="place"
+              :index="index"
+              :is-dragging="draggedIndex === index"
+              :is-drop-target="draggedIndex !== -1 && draggedIndex !== index && dropTargetIndex === index"
+              @dragstart="dragStart($event, index)"
+              @dragend="draggedIndex = -1"
+              @dragenter="dragEnter($event, index)"
+              @dragleave="dragLeave($event, index)"
+              @drop="drop($event, index)"
+            >
+              <template #actions>
+                <UButton @click="openRemovePlaceModal(place)" variant="soft" color="red" size="xs" icon="i-heroicons-trash">
+                  Remove
+                </UButton>
+              </template>
+            </DraggablePlaceItem>
 
-            <template #distance-indicator>
-              <div v-if="index < trip.places.length - 1" class="distance-indicator">
-                <div class="distance-line"></div>
-                <div class="distance-badge">
-                  {{ formatDistance(getDistanceBetweenPlaces(place, trip.places[index + 1])) }}
-                </div>
-                <div class="distance-line"></div>
-              </div>
-            </template>
-          </DraggablePlaceItem>
+            <DistanceIndicator
+              v-if="index < trip.places.length - 1"
+              :distance="getDistanceBetweenPlaces(place, trip.places[index + 1])"
+            />
+          </template>
         </div>
       </div>
     </div>

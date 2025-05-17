@@ -1,7 +1,12 @@
 <template>
   <div class="place-card-wrapper">
     <NuxtLink :to="`/places/${place.id}`" class="place-card hover:no-underline">
-      <h3 class="text-lg font-semibold text-primary mb-2">{{ place.name }}</h3>
+      <div class="place-header">
+        <h3 class="text-lg font-semibold text-primary">{{ place.name }}</h3>
+        <div class="place-actions">
+          <slot name="actions"></slot>
+        </div>
+      </div>
       <div class="place-details">
         <span class="category">{{ place.category }}</span>
         <span class="coordinates">{{ place.lat.toFixed(4) }}, {{ place.lng.toFixed(4) }}</span>
@@ -33,6 +38,13 @@ defineProps<{
   transform: translateY(-2px);
   box-shadow: 0 6px 18px rgba(0, 220, 130, 0.1);
   border-color: rgba(0, 220, 130, 0.4);
+}
+
+.place-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
 }
 
 .place-details {

@@ -6,7 +6,7 @@
     @dragend="onDragEnd"
     @dragover.prevent
     @dragenter.prevent="onDragEnter"
-    @dragleave="onDragLeave"
+    @dragleave.prevent="onDragLeave"
     @drop="onDrop"
     :class="{
       'dragging': isDragging,
@@ -17,9 +17,11 @@
       <UIcon name="i-heroicons-bars-3" class="text-gray-400" />
     </div>
 
-    <PlaceCard :place="place" />
-
-    <slot name="actions"></slot>
+    <PlaceCard :place="place">
+      <template #actions>
+        <slot name="actions"></slot>
+      </template>
+    </PlaceCard>
 
     <slot name="distance-indicator"></slot>
   </div>
