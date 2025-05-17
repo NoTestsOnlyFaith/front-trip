@@ -1,5 +1,9 @@
 ## Środowisko lokalne:
 
+### Wymagania:
+- Node 22
+- Npm
+
 1. Zainstaluj zależności:
 
 ```bash
