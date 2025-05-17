@@ -21,6 +21,9 @@
           <UButton v-if="!isEditingName" @click="startEditName" variant="ghost" size="xs" icon="i-heroicons-pencil" class="text-gray-500" />
         </div>
         <div class="flex gap-2">
+          <UButton @click="isDeleteModalOpen = true" variant="soft" color="red" size="sm" icon="i-heroicons-trash">
+            Delete Trip
+          </UButton>
           <UButton to="/trips" variant="ghost" size="sm">
             Back to Trips
           </UButton>
@@ -73,6 +76,10 @@
               </div>
             </NuxtLink>
 
+            <UButton @click="openRemovePlaceModal(place)" variant="soft" color="red" size="xs" icon="i-heroicons-trash">
+              Remove
+            </UButton>
+
             <!-- Distance to next place -->
             <div v-if="index < trip.places.length - 1" class="distance-indicator">
               <div class="distance-line"></div>
@@ -88,6 +95,34 @@
     <div v-else class="text-center text-gray-500">
       Trip not found or you don't have access to view it.
     </div>
+
+    <!-- Delete Trip Modal -->
+    <div v-if="isDeleteModalOpen" class="modal-overlay" @click="isDeleteModalOpen = false">
+      <div class="modal-content" @click.stop>
+        <h3 class="text-xl font-semibold mb-3">Delete Trip</h3>
+        <p class="mb-5" v-if="trip">Are you sure you want to delete "{{ trip.name }}"? This action cannot be undone.</p>
+        <div class="flex justify-end gap-3">
+          <UButton @click="isDeleteModalOpen = false" variant="outline">Cancel</UButton>
+          <UButton color="red" :loading="isDeleting" @click="deleteTrip">
+            Delete
+          </UButton>
+        </div>
+      </div>
+    </div>
+
+    <!-- Remove Place Modal -->
+    <div v-if="isRemovePlaceModalOpen" class="modal-overlay" @click="isRemovePlaceModalOpen = false">
+      <div class="modal-content" @click.stop>
+        <h3 class="text-xl font-semibold mb-3">Remove Place</h3>
+        <p class="mb-5" v-if="placeToRemove">Are you sure you want to remove "{{ placeToRemove.name }}" from this trip?</p>
+        <div class="flex justify-end gap-3">
+          <UButton @click="isRemovePlaceModalOpen = false" variant="outline">Cancel</UButton>
+          <UButton color="red" :loading="isRemovingPlace" @click="confirmRemovePlace">
+            Remove
+          </UButton>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -99,7 +134,7 @@ import type { Place } from '../../services/placesService';
 
 const route = useRoute();
 const { isAuthenticated } = useAuthService();
-const { getTripById, updateTrip } = useTripsService();
+const { getTripById, updateTrip, deleteTripById } = useTripsService();
 
 // Redirect if not authenticated
 onMounted(() => {
@@ -226,6 +261,53 @@ const drop = async (event: DragEvent, dropIndex: number) => {
     } catch (err) {
       console.error('Error updating trip places order:', err);
       // Show error message if needed
+    }
+  }
+};
+
+// Remove place functionality
+const isRemovePlaceModalOpen = ref(false);
+const placeToRemove = ref<Place | null>(null);
+const isRemovingPlace = ref(false);
+
+const openRemovePlaceModal = (place: Place) => {
+  placeToRemove.value = place;
+  isRemovePlaceModalOpen.value = true;
+};
+
+const confirmRemovePlace = async () => {
+  if (trip.value && placeToRemove.value) {
+    const updatedPlaces = trip.value.places.filter(p => p.id !== placeToRemove.value?.id);
+
+    isRemovingPlace.value = true;
+    try {
+      await updateTrip(trip.value.id, { places: updatedPlaces });
+      trip.value.places = updatedPlaces;
+      isRemovePlaceModalOpen.value = false;
+    } catch (err) {
+      console.error('Error removing place:', err);
+      // Show error message if needed
+    } finally {
+      isRemovingPlace.value = false;
+    }
+  }
+};
+
+// Delete trip functionality
+const isDeleteModalOpen = ref(false);
+const isDeleting = ref(false);
+
+const deleteTrip = async () => {
+  if (trip.value) {
+    isDeleting.value = true;
+    try {
+      await deleteTripById(trip.value.id);
+      navigateTo('/trips');
+    } catch (err) {
+      console.error('Error deleting trip:', err);
+      // Show error message if needed
+    } finally {
+      isDeleting.value = false;
     }
   }
 };
@@ -374,5 +456,41 @@ const drop = async (event: DragEvent, dropIndex: number) => {
   font-weight: 500;
   margin: 8px 0;
   border: 1px solid #bfdbfe;
+}
+
+/* Modal styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 1rem;
+}
+
+.modal-content {
+  background-color: white;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 500px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+  animation: modal-in 0.2s ease-out;
+}
+
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 </style>

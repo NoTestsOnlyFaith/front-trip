@@ -28,8 +28,38 @@
               </div>
             </div>
           </NuxtLink>
+          <div class="trip-actions">
+            <UButton
+              color="red"
+              variant="soft"
+              size="xs"
+              icon="i-heroicons-trash"
+              @click.stop="confirmDeleteTrip(trip)"
+              class="delete-btn"
+            >
+              Delete
+            </UButton>
+          </div>
         </li>
       </ul>
+    </div>
+
+    <!-- Custom Delete Trip Modal -->
+    <div v-if="isDeleteModalOpen" class="modal-overlay" @click="isDeleteModalOpen = false">
+      <div class="modal-content" @click.stop>
+        <h3 class="text-xl font-semibold mb-3">Delete Trip</h3>
+        <p class="mb-5" v-if="tripToDelete">Are you sure you want to delete "{{ tripToDelete.name }}"? This action cannot be undone.</p>
+        <div class="flex justify-end gap-3">
+          <UButton @click="isDeleteModalOpen = false" variant="outline">Cancel</UButton>
+          <UButton
+            color="red"
+            :loading="isDeleting"
+            @click="deleteSelectedTrip"
+          >
+            Delete
+          </UButton>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -40,7 +70,7 @@ import { useAuthService } from '../../services/authService';
 import { onMounted, ref } from 'vue';
 
 const { isAuthenticated } = useAuthService();
-const { getTrips } = useTripsService();
+const { getTrips, deleteTrip } = useTripsService();
 
 // Redirect if not authenticated
 onMounted(() => {
@@ -59,6 +89,31 @@ const formatDate = (dateString: string) => {
     month: 'short',
     day: 'numeric'
   });
+};
+
+// State for delete confirmation modal
+const isDeleteModalOpen = ref(false);
+const tripToDelete = ref(null);
+const isDeleting = ref(false);
+
+const confirmDeleteTrip = (trip: any) => {
+  tripToDelete.value = trip;
+  isDeleteModalOpen.value = true;
+};
+
+const deleteSelectedTrip = async () => {
+  if (!tripToDelete.value) return;
+
+  isDeleting.value = true;
+  try {
+    await deleteTrip(tripToDelete.value.id);
+    trips.value = trips.value.filter(t => t.id !== tripToDelete.value.id);
+    isDeleteModalOpen.value = false;
+  } catch (err) {
+    console.error('Failed to delete trip:', err);
+  } finally {
+    isDeleting.value = false;
+  }
 };
 </script>
 
@@ -122,4 +177,50 @@ const formatDate = (dateString: string) => {
   border-radius: 8px;
   color: #64748b;
 }
+
+.trip-actions {
+  margin-top: 10px;
+  text-align: right;
+}
+
+.delete-btn {
+  margin-left: auto;
+}
+
+/* Modal styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 1rem;
+}
+
+.modal-content {
+  background-color: white;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 500px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+  animation: modal-in 0.2s ease-out;
+}
+
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
 </style>
+
