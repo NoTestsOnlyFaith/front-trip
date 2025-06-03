@@ -1,26 +1,19 @@
 <template>
   <div class="trip-detail-container">
-    <div v-if="pending" class="text-center text-gray-500">Loading trip details...</div>
+    <PageLoading v-if="pending">Loading trip details...</PageLoading>
     <div v-else-if="error" class="text-center text-red-500">Error: {{ error.message }}</div>
     <div v-else-if="trip">
       <div class="flex justify-between items-center mb-6">
-        <!-- Trip name (editable) -->
-        <div class="flex items-center gap-3">
-          <div v-if="isEditingName">
-            <div class="flex items-center gap-2">
-              <UInput v-model="editedName" class="text-2xl font-bold" />
-              <UButton @click="saveTripName" color="primary" size="sm" :loading="isSaving">
-                Save
-              </UButton>
-              <UButton @click="cancelEditName" variant="ghost" size="sm">
-                Cancel
-              </UButton>
-            </div>
-          </div>
-          <h1 v-else class="text-3xl font-bold text-primary">{{ trip.name }}</h1>
-          <UButton v-if="!isEditingName" @click="startEditName" variant="ghost" size="xs" icon="i-heroicons-pencil" class="text-gray-500" />
-        </div>
+        <EditableTitle
+          :title="trip.name"
+          :is-saving="isSaving"
+          :editable="true"
+          @save="saveTripName"
+        />
         <div class="flex gap-2">
+          <UButton @click="isDeleteModalOpen = true" variant="soft" color="red" size="sm" icon="i-heroicons-trash">
+            Delete Trip
+          </UButton>
           <UButton to="/trips" variant="ghost" size="sm">
             Back to Trips
           </UButton>
@@ -46,48 +39,60 @@
 
       <div v-else>
         <div class="places-list">
-          <div
-              v-for="(place, index) in trip.places"
-              :key="place.id"
-              class="place-item"
-              draggable="true"
+          <template v-for="(place, index) in trip.places" :key="place.id">
+            <DraggablePlaceItem
+              :place="place"
+              :index="index"
+              :is-dragging="draggedIndex === index"
+              :is-drop-target="draggedIndex !== -1 && draggedIndex !== index && dropTargetIndex === index"
               @dragstart="dragStart($event, index)"
               @dragend="draggedIndex = -1"
-              @dragover.prevent
-              @dragenter.prevent="dragEnter($event, index)"
+              @dragenter="dragEnter($event, index)"
               @dragleave="dragLeave($event, index)"
               @drop="drop($event, index)"
-              :class="{
-              'dragging': draggedIndex === index,
-              'drop-target': draggedIndex !== -1 && draggedIndex !== index && dropTargetIndex === index
-            }"
-          >
-            <div class="drag-handle">
-              <UIcon name="i-heroicons-bars-3" class="text-gray-400" />
-            </div>
-            <NuxtLink :to="`/places/${place.id}`" class="place-card hover:no-underline">
-              <h3 class="text-lg font-semibold text-primary mb-2">{{ place.name }}</h3>
-              <div class="place-details">
-                <span class="category">{{ place.category }}</span>
-                <span class="coordinates">{{ place.lat.toFixed(4) }}, {{ place.lng.toFixed(4) }}</span>
-              </div>
-            </NuxtLink>
+            >
+              <template #actions>
+                <UButton @click="openRemovePlaceModal(place)" variant="soft" color="red" size="xs" icon="i-heroicons-trash">
+                  Remove
+                </UButton>
+              </template>
+            </DraggablePlaceItem>
 
-            <!-- Distance to next place -->
-            <div v-if="index < trip.places.length - 1" class="distance-indicator">
-              <div class="distance-line"></div>
-              <div class="distance-badge">
-                {{ formatDistance(getDistanceBetweenPlaces(place, trip.places[index + 1])) }}
-              </div>
-              <div class="distance-line"></div>
-            </div>
-          </div>
+            <DistanceIndicator
+              v-if="index < trip.places.length - 1"
+              :distance="getDistanceBetweenPlaces(place, trip.places[index + 1])"
+            />
+          </template>
         </div>
       </div>
     </div>
     <div v-else class="text-center text-gray-500">
       Trip not found or you don't have access to view it.
     </div>
+
+    <!-- Delete Trip Modal -->
+    <ConfirmationModal
+      :is-open="isDeleteModalOpen"
+      title="Delete Trip"
+      :message="trip ? `Are you sure you want to delete ${trip.name}? This action cannot be undone.` : ''"
+      confirm-button-text="Delete"
+      confirm-button-color="red"
+      :is-loading="isDeleting"
+      @close="isDeleteModalOpen = false"
+      @confirm="deleteTrip"
+    />
+
+    <!-- Remove Place Modal -->
+    <ConfirmationModal
+      :is-open="isRemovePlaceModalOpen"
+      title="Remove Place"
+      :message="placeToRemove ? `Are you sure you want to remove ${placeToRemove.name} from this trip?` : ''"
+      confirm-button-text="Remove"
+      confirm-button-color="red"
+      :is-loading="isRemovingPlace"
+      @close="isRemovePlaceModalOpen = false"
+      @confirm="confirmRemovePlace"
+    />
   </div>
 </template>
 
@@ -99,7 +104,7 @@ import type { Place } from '../../services/placesService';
 
 const route = useRoute();
 const { isAuthenticated } = useAuthService();
-const { getTripById, updateTrip } = useTripsService();
+const { getTripById, updateTrip, deleteTripById } = useTripsService();
 
 // Redirect if not authenticated
 onMounted(() => {
@@ -112,32 +117,16 @@ const tripId = route.params.id;
 const { data: trip, pending, error } = await getTripById(tripId);
 
 // Trip name editing
-const isEditingName = ref(false);
-const editedName = ref('');
 const isSaving = ref(false);
-const draggedIndex = ref(-1);
-const dropTargetIndex = ref(-1);
 
-const startEditName = () => {
-  if (trip.value) {
-    editedName.value = trip.value.name;
-    isEditingName.value = true;
-  }
-};
-
-const cancelEditName = () => {
-  isEditingName.value = false;
-};
-
-const saveTripName = async () => {
-  if (!trip.value || !editedName.value.trim()) return;
+const saveTripName = async (newName: string) => {
+  if (!trip.value) return;
 
   isSaving.value = true;
   try {
-    await updateTrip(trip.value.id, { name: editedName.value.trim() });
+    await updateTrip(trip.value.id, { name: newName });
     // Update the local trip object
-    trip.value.name = editedName.value.trim();
-    isEditingName.value = false;
+    trip.value.name = newName;
   } catch (err) {
     console.error('Error updating trip name:', err);
     // Show error message if needed
@@ -171,6 +160,9 @@ const formatDate = (dateString: string) => {
 };
 
 // Drag and drop functionality
+const draggedIndex = ref(-1);
+const dropTargetIndex = ref(-1);
+
 const dragStart = (event: DragEvent, index: number) => {
   draggedIndex.value = index;
   if (event.dataTransfer) {
@@ -229,6 +221,53 @@ const drop = async (event: DragEvent, dropIndex: number) => {
     }
   }
 };
+
+// Remove place functionality
+const isRemovePlaceModalOpen = ref(false);
+const placeToRemove = ref<Place | null>(null);
+const isRemovingPlace = ref(false);
+
+const openRemovePlaceModal = (place: Place) => {
+  placeToRemove.value = place;
+  isRemovePlaceModalOpen.value = true;
+};
+
+const confirmRemovePlace = async () => {
+  if (trip.value && placeToRemove.value) {
+    const updatedPlaces = trip.value.places.filter(p => p.id !== placeToRemove.value?.id);
+
+    isRemovingPlace.value = true;
+    try {
+      await updateTrip(trip.value.id, { places: updatedPlaces });
+      trip.value.places = updatedPlaces;
+      isRemovePlaceModalOpen.value = false;
+    } catch (err) {
+      console.error('Error removing place:', err);
+      // Show error message if needed
+    } finally {
+      isRemovingPlace.value = false;
+    }
+  }
+};
+
+// Delete trip functionality
+const isDeleteModalOpen = ref(false);
+const isDeleting = ref(false);
+
+const deleteTrip = async () => {
+  if (trip.value) {
+    isDeleting.value = true;
+    try {
+      await deleteTripById(trip.value.id);
+      navigateTo('/trips');
+    } catch (err) {
+      console.error('Error deleting trip:', err);
+      // Show error message if needed
+    } finally {
+      isDeleting.value = false;
+    }
+  }
+};
 </script>
 
 <style scoped>
@@ -236,6 +275,14 @@ const drop = async (event: DragEvent, dropIndex: number) => {
   max-width: 900px;
   margin: 0 auto;
   padding: 32px 16px;
+  color: #f3f4f6;
+}
+
+.trip-detail-container > div:not(.modal-overlay) {
+  border-radius: 0.5rem;
+  border: 1px solid rgba(0, 220, 130, 0.15);
+  padding: 1.5rem;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(0, 220, 130, 0.1);
 }
 
 .places-list {
@@ -252,21 +299,20 @@ const drop = async (event: DragEvent, dropIndex: number) => {
   align-items: center;
   position: relative;
   cursor: grab;
-  transition: background-color 0.2s, transform 0.2s, box-shadow 0.2s;
-  margin-bottom: 8px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  margin-bottom: 16px;
+  border-radius: 8px;
 }
 
 .place-item.dragging {
-  opacity: 0.6;
-  background-color: #f0f9ff;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  opacity: 0.7;
+  border-color: rgba(0, 220, 130, 0.5);
   cursor: grabbing;
 }
 
 .place-item.drop-target {
-  background-color: #f0f9ff;
-  border-top: 2px dashed #3b82f6;
-  border-bottom: 2px dashed #3b82f6;
+  border-top: 2px dashed rgba(0, 220, 130, 0.6);
+  border-bottom: 2px dashed rgba(0, 220, 130, 0.6);
   padding-top: 4px;
   padding-bottom: 4px;
   position: relative;
@@ -283,7 +329,7 @@ const drop = async (event: DragEvent, dropIndex: number) => {
   height: 0;
   border-left: 8px solid transparent;
   border-right: 8px solid transparent;
-  border-top: 8px solid #3b82f6;
+  border-top: 8px solid rgba(0, 220, 130, 0.6);
 }
 
 .drag-handle {
@@ -297,10 +343,11 @@ const drop = async (event: DragEvent, dropIndex: number) => {
   display: flex;
   align-items: center;
   justify-content: center;
+  color: rgba(0, 220, 130, 0.6);
 }
 
 .place-item:hover .drag-handle {
-  background-color: #f3f4f6;
+  color: rgba(0, 220, 130, 0.8);
 }
 
 .place-item.dragging .drag-handle {
@@ -308,19 +355,19 @@ const drop = async (event: DragEvent, dropIndex: number) => {
 }
 
 .place-card {
-  border: 1px solid #e5e7eb;
+  border: 1px solid rgba(0, 220, 130, 0.15);
   border-radius: 10px;
   padding: 16px;
   transition: box-shadow 0.2s, transform 0.2s;
-  box-shadow: 0 1px 3px 0 rgba(0,0,0,0.03);
+  box-shadow: 0 1px 3px 0 rgba(0,0,0,0.1);
   width: 100%;
   display: block;
 }
 
 .place-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(0, 80, 180, 0.08);
-  border-color: #3b82f6;
+  box-shadow: 0 6px 18px rgba(0, 220, 130, 0.1);
+  border-color: rgba(0, 220, 130, 0.4);
 }
 
 .place-details {
@@ -333,20 +380,20 @@ const drop = async (event: DragEvent, dropIndex: number) => {
 
 .category {
   text-transform: capitalize;
-  background-color: #f1f5f9;
-  color: #2563eb;
   padding: 3px 12px;
   border-radius: 12px;
   font-weight: 500;
   font-size: 0.9em;
+  border: 1px solid rgba(0, 220, 130, 0.3);
+  color: rgba(0, 220, 130, 0.8);
 }
 
 .coordinates {
   font-family: 'Fira Mono', 'Menlo', 'Monaco', monospace;
-  background: #f3f4f6;
   padding: 2px 8px;
   border-radius: 8px;
-  color: #64748b;
+  color: #a3a3a3;
+  border: 1px solid #333333;
   font-size: 0.85em;
 }
 
@@ -362,17 +409,60 @@ const drop = async (event: DragEvent, dropIndex: number) => {
 .distance-line {
   height: 20px;
   width: 2px;
-  background-color: #e5e7eb;
+  background-color: rgba(0, 220, 130, 0.2);
 }
 
 .distance-badge {
-  background-color: #dbeafe;
-  color: #2563eb;
   padding: 4px 12px;
   border-radius: 16px;
   font-size: 0.85rem;
   font-weight: 500;
   margin: 8px 0;
-  border: 1px solid #bfdbfe;
+  border: 1px solid rgba(0, 220, 130, 0.3);
+  color: rgba(0, 220, 130, 0.8);
+}
+
+/* Modal styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 1rem;
+  backdrop-filter: blur(3px);
+}
+
+.modal-content {
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 500px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(0, 220, 130, 0.1);
+  animation: modal-in 0.2s ease-out;
+  color: #f3f4f6;
+  border: 1px solid rgba(0, 220, 130, 0.15);
+}
+
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.trip-meta {
+  border-bottom: 1px solid rgba(0, 220, 130, 0.15);
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
 }
 </style>

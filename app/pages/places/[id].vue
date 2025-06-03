@@ -203,85 +203,82 @@ onUnmounted(() => {
   max-width: 900px;
   margin: 0 auto;
   padding: 32px 16px;
+  color: #f3f4f6;
 }
 
-.actions {
-  margin-bottom: 20px;
+.place-detail {
+  border-radius: 0.5rem;
+  border: 1px solid rgba(0, 220, 130, 0.15);
+  padding: 1.5rem;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(0, 220, 130, 0.1);
 }
 
 .detail-card {
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 32px 24px;
-  box-shadow: 0 1px 6px 0 rgba(0,0,0,0.04);
+  border-radius: 0.5rem;
+  border: 1px solid rgba(0, 220, 130, 0.15);
+  padding: 1.5rem;
+  margin-top: 1.5rem;
 }
 
 .info-row {
   display: flex;
-  margin-bottom: 18px;
-  align-items: flex-start;
+  margin-bottom: 1.25rem;
+  align-items: baseline;
 }
 
 .label {
   font-weight: 600;
-  width: 130px;
+  width: 120px;
   flex-shrink: 0;
+  color: #a3a3a3;
 }
 
 .value {
-  flex: 1;
+  flex-grow: 1;
 }
 
 .category {
+  display: inline-block;
   text-transform: capitalize;
   padding: 3px 12px;
   border-radius: 12px;
   font-weight: 500;
-  font-size: 1em;
-  display: inline-block;
-}
-
-.description {
-  border-radius: 8px;
-  padding: 6px 12px;
-  font-size: 1em;
+  border: 1px solid rgba(0, 220, 130, 0.3);
+  color: rgba(0, 220, 130, 0.8);
 }
 
 .coordinates {
   font-family: 'Fira Mono', 'Menlo', 'Monaco', monospace;
   padding: 2px 8px;
   border-radius: 8px;
+  color: #a3a3a3;
+  border: 1px solid #333333;
 }
 
-.map-placeholder {
-  height: 280px;
-  border-radius: 10px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-top: 28px;
-  border: 1.5px dashed #cbd5e1;
-  color: #64748b;
-  font-size: 1.1em;
-  letter-spacing: 0.01em;
+.description {
+  line-height: 1.6;
 }
 
 .add-to-trip-section {
-  margin-top: 24px;
-  padding: 16px;
-  border-radius: 10px;
-  position: relative;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(0, 220, 130, 0.2);
 }
 
-.add-to-trip-section::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 4px;
-  height: 100%;
-  background-color: #0ea5e9;
-  border-top-left-radius: 10px;
-  border-bottom-left-radius: 10px;
+.add-to-trip-section select {
+  color: #f3f4f6;
+  border-color: rgba(0, 220, 130, 0.2);
+}
+
+.add-to-trip-section select:focus {
+  border-color: rgba(0, 220, 130, 0.5);
+  box-shadow: 0 0 0 2px rgba(0, 220, 130, 0.2);
+}
+
+.map-placeholder {
+  height: 300px;
+  margin-top: 2rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(0, 220, 130, 0.2);
 }
 </style>

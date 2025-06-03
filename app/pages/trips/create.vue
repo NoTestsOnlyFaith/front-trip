@@ -188,44 +188,46 @@ const handleSubmit = async () => {
   max-width: 900px;
   margin: 0 auto;
   padding: 32px 16px;
+  color: #f3f4f6;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(0, 220, 130, 0.1);
+  border: 1px solid rgba(0, 220, 130, 0.15);
 }
 
 .places-section {
-  margin-top: 24px;
-  padding: 16px;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  background-color: #f9fafb;
+  margin-top: 2rem;
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(0, 220, 130, 0.15);
 }
 
 .places-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 16px;
-  margin-top: 16px;
+  gap: 1rem;
+  margin-top: 1rem;
 }
 
 .place-card {
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 12px;
-  background-color: white;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(0, 220, 130, 0.15);
   cursor: pointer;
-  transition: all 0.2s;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  transition: all 0.2s ease;
 }
 
 .place-card:hover {
-  border-color: #3b82f6;
   transform: translateY(-2px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 6px 18px rgba(0, 220, 130, 0.1);
+  border-color: rgba(0, 220, 130, 0.4);
 }
 
 .place-card.selected {
-  border-color: #3b82f6;
-  background-color: #eff6ff;
+  border-color: rgba(0, 220, 130, 0.5);
+  box-shadow: 0 0 0 1px rgba(0, 220, 130, 0.3);
 }
 
 .place-card-content {
@@ -234,39 +236,69 @@ const handleSubmit = async () => {
 
 .place-name {
   font-weight: 600;
-  margin-bottom: 4px;
+  color: #f3f4f6;
 }
 
 .place-category {
+  display: inline-block;
+  margin-top: 0.5rem;
   font-size: 0.85rem;
-  color: #6b7280;
-  background-color: #f3f4f6;
-  padding: 2px 8px;
+  padding: 0.2rem 0.6rem;
   border-radius: 12px;
+  border: 1px solid rgba(0, 220, 130, 0.3);
+  color: rgba(0, 220, 130, 0.8);
 }
 
 .selected-places-summary {
-  margin-top: 24px;
-  padding: 16px;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  background-color: #f9fafb;
+  margin-top: 2rem;
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(0, 220, 130, 0.15);
 }
 
 .selected-places-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
 }
 
 .selected-place-item {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 8px;
-  background-color: white;
-  padding: 4px 12px;
-  border-radius: 16px;
-  border: 1px solid #e5e7eb;
-  font-size: 0.9rem;
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
+  border-radius: 0.375rem;
+  border: 1px solid rgba(0, 220, 130, 0.15);
+}
+
+.selected-place-item span {
+  color: #f3f4f6;
+}
+
+/* Override form styles for dark mode */
+:deep(.u-input) {
+  color: #f3f4f6;
+  border-color: rgba(0, 220, 130, 0.15);
+}
+
+:deep(.u-input:focus) {
+  border-color: rgba(0, 220, 130, 0.5);
+  box-shadow: 0 0 0 2px rgba(0, 220, 130, 0.2);
+}
+
+:deep(.u-textarea) {
+  color: #f3f4f6;
+  border-color: rgba(0, 220, 130, 0.15);
+}
+
+:deep(.u-textarea:focus) {
+  border-color: rgba(0, 220, 130, 0.5);
+  box-shadow: 0 0 0 2px rgba(0, 220, 130, 0.2);
+}
+
+:deep(.u-form-group-label) {
+  color: #f3f4f6;
 }
 </style>
+
