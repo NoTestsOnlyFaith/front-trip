@@ -1,7 +1,7 @@
 <template>
   <div class="trip-detail-container">
     <PageLoading v-if="pending">Loading trip details...</PageLoading>
-    <div v-else-if="error" class="text-center text-red-500">Error: {{ error.message }}</div>
+    <div v-else-if="error" class="text-center text-red-500">Error: {{ error && (error as any).message }}</div>
     <div v-else-if="trip">
       <div class="flex justify-between items-center mb-6">
         <EditableTitle
@@ -11,7 +11,7 @@
           @save="saveTripName"
         />
         <div class="flex gap-2">
-          <UButton @click="isDeleteModalOpen = true" variant="soft" color="red" size="sm" icon="i-heroicons-trash">
+          <UButton color="error" variant="soft" size="sm" icon="i-heroicons-trash" @click="isDeleteModalOpen = true">
             Delete Trip
           </UButton>
           <UButton to="/trips" variant="ghost" size="sm">
@@ -21,7 +21,12 @@
       </div>
 
       <div class="trip-meta mb-8">
-        <p class="text-gray-600 mb-4">{{ trip.description }}</p>
+        <EditableDescription
+          :description="trip.description"
+          :is-saving="isSaving"
+          :editable="true"
+          @save="saveTripDescription"
+        />
         <div class="flex flex-wrap items-center text-sm text-gray-500 gap-4">
           <span>Created: {{ formatDate(trip.createdAt) }}</span>
           <span>{{ trip.places.length }} places</span>
@@ -52,7 +57,7 @@
               @drop="drop($event, index)"
             >
               <template #actions>
-                <UButton @click="openRemovePlaceModal(place)" variant="soft" color="red" size="xs" icon="i-heroicons-trash">
+                <UButton color="error" variant="soft" size="xs" icon="i-heroicons-trash" @click="openRemovePlaceModal(place)">
                   Remove
                 </UButton>
               </template>
@@ -60,7 +65,7 @@
 
             <DistanceIndicator
               v-if="index < trip.places.length - 1"
-              :distance="getDistanceBetweenPlaces(place, trip.places[index + 1])"
+              :distance="getDistanceBetweenPlaces(place, trip.places[index + 1]!)"
             />
           </template>
         </div>
@@ -79,7 +84,7 @@
       confirm-button-color="red"
       :is-loading="isDeleting"
       @close="isDeleteModalOpen = false"
-      @confirm="deleteTrip"
+      @confirm="deleteTripHandler"
     />
 
     <!-- Remove Place Modal -->
@@ -101,10 +106,11 @@ import { useTripsService, getDistanceBetweenPlaces, calculateTripLength } from '
 import { useAuthService } from '../../services/authService';
 import { onMounted, ref, computed } from 'vue';
 import type { Place } from '../../services/placesService';
+import EditableDescription from '../../components/EditableDescription.vue';
 
 const route = useRoute();
 const { isAuthenticated } = useAuthService();
-const { getTripById, updateTrip, deleteTripById } = useTripsService();
+const { getTripById, updateTrip, deleteTrip } = useTripsService();
 
 // Redirect if not authenticated
 onMounted(() => {
@@ -113,7 +119,7 @@ onMounted(() => {
   }
 });
 
-const tripId = route.params.id;
+const tripId = Array.isArray(route.params.id) ? route.params.id[0] : route.params.id;
 const { data: trip, pending, error } = await getTripById(tripId);
 
 // Trip name editing
@@ -130,6 +136,20 @@ const saveTripName = async (newName: string) => {
   } catch (err) {
     console.error('Error updating trip name:', err);
     // Show error message if needed
+  } finally {
+    isSaving.value = false;
+  }
+};
+
+// Trip description editing
+const saveTripDescription = async (newDescription: string) => {
+  if (!trip.value) return;
+  isSaving.value = true;
+  try {
+    const { data: updated } = updateTrip(trip.value.id, { description: newDescription });
+    if (updated.value) {
+      trip.value.description = updated.value.description;
+    }
   } finally {
     isSaving.value = false;
   }
@@ -254,11 +274,11 @@ const confirmRemovePlace = async () => {
 const isDeleteModalOpen = ref(false);
 const isDeleting = ref(false);
 
-const deleteTrip = async () => {
+const deleteTripHandler = async () => {
   if (trip.value) {
     isDeleting.value = true;
     try {
-      await deleteTripById(trip.value.id);
+      await deleteTrip(trip.value.id);
       navigateTo('/trips');
     } catch (err) {
       console.error('Error deleting trip:', err);
