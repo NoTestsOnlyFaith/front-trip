@@ -15,13 +15,13 @@
               v-model="searchTerm" 
               type="text" 
               placeholder="Search by name..." 
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-            />
+              class="w-full px-4 py-2 border border-[rgba(0,220,130,0.2)] rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+            >
           </div>
-          <div class="category-filter">
-            <select 
+          <div class="category-filter border border-[rgba(0,220,130,0.2)] rounded-lg flex items-center">
+            <select
               v-model="selectedCategory" 
-              class="w-full px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+              class="w-full pl-4 pr-10 py-2 border-none focus:outline-none focus:ring-0 bg-transparent"
             >
               <option value="">All Categories</option>
               <option v-for="category in uniqueCategories" :key="category" :value="category">
