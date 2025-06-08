@@ -112,7 +112,6 @@ const route = useRoute();
 const { isAuthenticated } = useAuthService();
 const { getTripById, updateTrip, deleteTrip } = useTripsService();
 
-// Redirect if not authenticated
 onMounted(() => {
   if (!isAuthenticated()) {
     return navigateTo('/login');
@@ -122,7 +121,6 @@ onMounted(() => {
 const tripId = Array.isArray(route.params.id) ? route.params.id[0] : route.params.id;
 const { data: trip, pending, error } = await getTripById(tripId);
 
-// Trip name editing
 const isSaving = ref(false);
 
 const saveTripName = async (newName: string) => {
@@ -131,17 +129,14 @@ const saveTripName = async (newName: string) => {
   isSaving.value = true;
   try {
     await updateTrip(trip.value.id, { name: newName });
-    // Update the local trip object
     trip.value.name = newName;
   } catch (err) {
     console.error('Error updating trip name:', err);
-    // Show error message if needed
   } finally {
     isSaving.value = false;
   }
 };
 
-// Trip description editing
 const saveTripDescription = async (newDescription: string) => {
   if (!trip.value) return;
   isSaving.value = true;
@@ -155,13 +150,11 @@ const saveTripDescription = async (newDescription: string) => {
   }
 };
 
-// Calculate total trip length
 const totalTripLength = computed(() => {
   if (!trip.value || trip.value.places.length <= 1) return 0;
   return calculateTripLength(trip.value.places);
 });
 
-// Format distance to a readable format
 const formatDistance = (distance: number): string => {
   if (distance < 1) {
     return `${Math.round(distance * 1000)} m`;
@@ -169,7 +162,6 @@ const formatDistance = (distance: number): string => {
   return `${distance.toFixed(1)} km`;
 };
 
-// Format date to a more readable format
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
   return date.toLocaleDateString('en-US', {
@@ -179,7 +171,6 @@ const formatDate = (dateString: string) => {
   });
 };
 
-// Drag and drop functionality
 const draggedIndex = ref(-1);
 const dropTargetIndex = ref(-1);
 
@@ -187,7 +178,6 @@ const dragStart = (event: DragEvent, index: number) => {
   draggedIndex.value = index;
   if (event.dataTransfer) {
     event.dataTransfer.effectAllowed = 'move';
-    // Set some data (required for Firefox)
     event.dataTransfer.setData('text/plain', index.toString());
   }
 };
@@ -207,42 +197,32 @@ const dragLeave = (event: DragEvent, index: number) => {
 const drop = async (event: DragEvent, dropIndex: number) => {
   event.preventDefault();
 
-  // Reset drop target index
   dropTargetIndex.value = -1;
 
-  // If no item is being dragged or trying to drop at the same position
   if (draggedIndex.value === -1 || draggedIndex.value === dropIndex) {
     draggedIndex.value = -1;
     return;
   }
 
   if (trip.value) {
-    // Create a copy of the places array
     const updatedPlaces = [...trip.value.places];
 
-    // Remove the dragged item
     const [draggedItem] = updatedPlaces.splice(draggedIndex.value, 1);
 
-    // Insert it at the drop position
     updatedPlaces.splice(dropIndex, 0, draggedItem);
 
-    // Update the trip with the new places order
     try {
       await updateTrip(trip.value.id, { places: updatedPlaces });
 
-      // Update the local trip object to reflect the changes
       trip.value.places = updatedPlaces;
 
-      // Reset the dragged index
       draggedIndex.value = -1;
     } catch (err) {
       console.error('Error updating trip places order:', err);
-      // Show error message if needed
     }
   }
 };
 
-// Remove place functionality
 const isRemovePlaceModalOpen = ref(false);
 const placeToRemove = ref<Place | null>(null);
 const isRemovingPlace = ref(false);
@@ -263,14 +243,12 @@ const confirmRemovePlace = async () => {
       isRemovePlaceModalOpen.value = false;
     } catch (err) {
       console.error('Error removing place:', err);
-      // Show error message if needed
     } finally {
       isRemovingPlace.value = false;
     }
   }
 };
 
-// Delete trip functionality
 const isDeleteModalOpen = ref(false);
 const isDeleting = ref(false);
 
@@ -282,7 +260,6 @@ const deleteTripHandler = async () => {
       navigateTo('/trips');
     } catch (err) {
       console.error('Error deleting trip:', err);
-      // Show error message if needed
     } finally {
       isDeleting.value = false;
     }
@@ -309,7 +286,7 @@ const deleteTripHandler = async () => {
   display: flex;
   flex-direction: column;
   margin-top: 16px;
-  padding-left: 40px; /* Add padding to accommodate drag handles */
+  padding-left: 40px;
   position: relative;
 }
 

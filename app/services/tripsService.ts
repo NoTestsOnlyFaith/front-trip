@@ -7,7 +7,7 @@ export interface Trip {
   name: string;
   description: string;
   places: Place[];
-  userId: string; // User's email as ID
+  userId: string;
   createdAt: string;
 }
 
@@ -46,7 +46,6 @@ export const useTripsService = () => {
     baseURL: '/api'
   };
 
-  // LocalStorage key for trips
   const TRIPS_STORAGE_KEY = 'user_trips';
 
   // Helper function to save trips to localStorage

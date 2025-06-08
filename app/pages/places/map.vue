@@ -11,9 +11,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { usePlacesService } from '~/services/placesService';
-import type { Place } from '~/services/placesService'; // Assuming Place type is exported
+import type { Place } from '~/services/placesService';
 
-// It's good practice to ensure Leaflet is only loaded on the client-side
 let L: any = null;
 let MarkerClusterGroup: any = null;
 
@@ -26,7 +25,6 @@ onMounted(async () => {
   if (import.meta.client) {
     try {
       L = await import('leaflet');
-      // Dynamically import leaflet.markercluster
       const { MarkerClusterGroup: mcg } = await import('leaflet.markercluster');
       MarkerClusterGroup = mcg;
 
@@ -42,7 +40,7 @@ onMounted(async () => {
       error.value = e.value;
 
       if (!error.value && L && MarkerClusterGroup) {
-        const map = L.map('mapId').setView([52.237049, 19.017532], 6); // Center of Poland
+        const map = L.map('mapId').setView([52.237049, 19.017532], 6);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -51,8 +49,8 @@ onMounted(async () => {
         const markers = new MarkerClusterGroup();
 
         places.value.forEach(place => {
-          if (place.lat && place.lng) {
-            const marker = L.marker([place.lat, place.lng]);
+          if (place.latitude && place.longitude) {
+            const marker = L.marker([place.latitude, place.longitude]);
             marker.bindPopup(`<b>${place.name}</b><br>${place.category}`);
             markers.addLayer(marker);
           }
@@ -72,22 +70,18 @@ onMounted(async () => {
   max-width: 1200px;
   margin: 0 auto;
   padding: 32px 16px;
-  color: #f3f4f6; /* Assuming dark theme text color */
+  color: #f3f4f6;
   border-radius: 0.5rem;
-  /* background-color: #1f2937; /* Assuming dark theme background */
-  /* box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(0, 220, 130, 0.1); */
-  /* border: 1px solid rgba(0, 220, 130, 0.15); */
 }
 
-/* Ensure Leaflet controls are visible on dark theme if necessary */
 :deep(.leaflet-control-zoom a),
 :deep(.leaflet-control-attribution a) {
-  color: #00dc82 !important; /* Primary color for links */
+  color: #00dc82 !important;
 }
 
 :deep(.leaflet-control-zoom-in),
 :deep(.leaflet-control-zoom-out) {
-  background-color: #374151 !important; /* Darker gray for controls */
+  background-color: #374151 !important;
   color: #f3f4f6 !important;
   border-color: #4b5563 !important;
 }

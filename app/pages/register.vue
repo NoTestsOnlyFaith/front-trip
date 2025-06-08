@@ -46,8 +46,7 @@ const router = useRouter();
 const handleRegister = () => {
   isLoading.value = true;
   errorMessage.value = '';
-  
-  // Basic validation
+
   if (!formState.value.email || !formState.value.password) {
     errorMessage.value = 'All fields are required';
     isLoading.value = false;
@@ -66,12 +65,10 @@ const handleRegister = () => {
     return;
   }
   
-  // Mock registration process
   setTimeout(() => {
-    // In a real app, this would call an API endpoint
     localStorage.setItem('registeredEmail', formState.value.email);
     router.push('/login');
     isLoading.value = false;
-  }, 1000); // Simulate API delay
+  }, 1000);
 }
 </script>

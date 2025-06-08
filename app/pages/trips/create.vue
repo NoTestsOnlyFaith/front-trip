@@ -100,26 +100,22 @@ const { isAuthenticated, getUser } = useAuthService();
 const { createTrip } = useTripsService();
 const { getPlaces } = usePlacesService();
 
-// Redirect if not authenticated
 onMounted(() => {
   if (!isAuthenticated()) {
     return navigateTo('/login');
   }
 });
 
-// Form state
 const formState = ref({
   name: '',
   description: ''
 });
 
-// Places
 const { data: places, pending: placesLoading, error: placesError } = await getPlaces();
 const selectedPlaces = ref<Place[]>([]);
 const searchTerm = ref('');
 const isSubmitting = ref(false);
 
-// Filter places based on search term
 const filteredPlaces = computed(() => {
   if (!places.value) return [];
   if (!searchTerm.value) return places.value;
@@ -131,7 +127,6 @@ const filteredPlaces = computed(() => {
   );
 });
 
-// Toggle place selection
 const togglePlace = (place: Place) => {
   const index = selectedPlaces.value.findIndex(p => p.id === place.id);
   if (index === -1) {
@@ -141,7 +136,6 @@ const togglePlace = (place: Place) => {
   }
 };
 
-// Remove place from selection
 const removePlace = (place: Place) => {
   const index = selectedPlaces.value.findIndex(p => p.id === place.id);
   if (index !== -1) {
@@ -149,7 +143,6 @@ const removePlace = (place: Place) => {
   }
 };
 
-// Handle form submission
 const handleSubmit = async () => {
   if (selectedPlaces.value.length === 0) {
     alert('Please select at least one place for your trip.');

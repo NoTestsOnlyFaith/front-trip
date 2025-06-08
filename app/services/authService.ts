@@ -21,21 +21,18 @@ export const useAuthService = () => {
     if (process.server) return Promise.resolve(false);
 
     return new Promise((resolve) => {
-      // Mock authentication process
       setTimeout(() => {
         if (email === 'test@test.pl' && password === 'Test1234') {
-          // Mock successful login
           localStorage.setItem('isAuthenticated', 'true');
           localStorage.setItem('user', JSON.stringify({ email }));
 
-          // Dispatch event to notify about auth state change
           window.dispatchEvent(new CustomEvent(authStateChangeEvent));
 
           resolve(true);
         } else {
           resolve(false);
         }
-      }, 1000); // Simulate API delay
+      }, 1000);
     });
   };
 
@@ -44,10 +41,8 @@ export const useAuthService = () => {
     localStorage.removeItem('isAuthenticated');
     localStorage.removeItem('user');
 
-    // Dispatch event to notify about auth state change
     window.dispatchEvent(new CustomEvent(authStateChangeEvent));
 
-    // Redirect to home page
     navigateTo('/');
   };
 

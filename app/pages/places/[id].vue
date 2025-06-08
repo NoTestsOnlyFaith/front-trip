@@ -25,11 +25,10 @@
         <div class="info-row">
           <span class="label">Coordinates:</span>
           <span class="value coordinates">
-            {{ place.lat.toFixed(6) }}, {{ place.lng.toFixed(6) }}
+            {{ place.latitude.toFixed(6) }}, {{ place.longitude.toFixed(6) }}
           </span>
         </div>
 
-        <!-- Add to Trip section (only for authenticated users) -->
         <div v-if="isAuthenticated" class="add-to-trip-section">
           <h3 class="text-lg font-semibold mb-3">Add to Trip</h3>
 
@@ -89,29 +88,23 @@ const id = route.params.id as string
 const mapContainer = ref<HTMLElement | null>(null)
 let map = null
 
-// Auth service
 const { isAuthenticated } = useAuthService()
 
-// Places service
 const { getPlaceById } = usePlacesService()
 const { data: place, pending, error } = await getPlaceById(id)
 
-// Trips service
 const { getTrips, updateTrip } = useTripsService()
 const { data: userTrips, pending: tripsLoading, error: tripsError } = await getTrips()
 
-// Add to trip state
 const selectedTripId = ref('')
 const isAddingToTrip = ref(false)
 const addToTripMessage = ref('')
 const addToTripSuccess = ref(false)
 
-// Check if a trip already contains the current place
 const tripContainsPlace = (trip: Trip, place: Place) => {
   return trip.places.some(p => p.id === place.id)
 }
 
-// Add the current place to the selected trip
 const addPlaceToTrip = async () => {
   if (!selectedTripId.value || !place.value) return
 
@@ -119,37 +112,29 @@ const addPlaceToTrip = async () => {
   addToTripMessage.value = ''
 
   try {
-    // Find the selected trip
     const selectedTrip = userTrips.value?.find(trip => trip.id === parseInt(selectedTripId.value))
 
     if (!selectedTrip) {
       throw new Error('Selected trip not found')
     }
 
-    // Check if place is already in the trip
     if (tripContainsPlace(selectedTrip, place.value)) {
       addToTripMessage.value = 'This place is already in the selected trip'
       addToTripSuccess.value = false
       return
     }
 
-    // Create a new array with the current places plus the new place
     const updatedPlaces = [...selectedTrip.places, place.value]
 
-    // Update the trip with the new places array
     await updateTrip(selectedTrip.id, { places: updatedPlaces })
 
-    // Update success message
     addToTripMessage.value = `Added to "${selectedTrip.name}" successfully!`
     addToTripSuccess.value = true
 
-    // Reset the selected trip
     selectedTripId.value = ''
 
-    // Refresh the trips list
     await getTrips()
   } catch (error) {
-    console.error('Error adding place to trip:', error)
     addToTripMessage.value = 'Failed to add place to trip. Please try again.'
     addToTripSuccess.value = false
   } finally {
@@ -159,10 +144,8 @@ const addPlaceToTrip = async () => {
 
 onMounted(async () => {
   if (process.client && place.value && mapContainer.value) {
-    // Dynamically import Leaflet on client-side only
     const L = await import('leaflet')
 
-    // Fix Leaflet's default icon path issues with bundlers
     delete L.default.Icon.Default.prototype._getIconUrl
     L.default.Icon.Default.mergeOptions({
       iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
@@ -170,26 +153,22 @@ onMounted(async () => {
       shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png'
     })
 
-    // Initialize the map
     map = L.default.map(mapContainer.value).setView(
-      [place.value.lat, place.value.lng], 
+      [place.value.latitude, place.value.longitude],
       13
     )
 
-    // Add the OpenStreetMap tile layer
     L.default.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(map)
 
-    // Add a marker at the place's location
-    L.default.marker([place.value.lat, place.value.lng])
+    L.default.marker([place.value.latitude, place.value.longitude])
       .addTo(map)
       .bindPopup(place.value.name)
       .openPopup()
   }
 })
 
-// Clean up the map when the component is unmounted
 onUnmounted(() => {
   if (map) {
     map.remove()

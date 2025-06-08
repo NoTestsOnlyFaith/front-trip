@@ -44,7 +44,6 @@
       </ul>
     </div>
 
-    <!-- Delete Trip Confirmation Modal -->
     <ConfirmationModal
       :is-open="isDeleteModalOpen"
       title="Delete Trip"
@@ -68,7 +67,6 @@ import ConfirmationModal from '../../components/ConfirmationModal.vue';
 const { isAuthenticated } = useAuthService();
 const { getTrips, deleteTrip } = useTripsService();
 
-// Redirect if not authenticated
 onMounted(() => {
   if (!isAuthenticated()) {
     return navigateTo('/login');
@@ -77,7 +75,6 @@ onMounted(() => {
 
 const { data: trips, pending, error } = await getTrips();
 
-// Format date to a more readable format
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
   return date.toLocaleDateString('en-US', {
@@ -87,7 +84,6 @@ const formatDate = (dateString: string) => {
   });
 };
 
-// State for delete confirmation modal
 const isDeleteModalOpen = ref(false);
 const tripToDelete = ref(null);
 const isDeleting = ref(false);

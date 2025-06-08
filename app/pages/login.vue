@@ -45,11 +45,9 @@ const handleLogin = async () => {
   errorMessage.value = '';
 
   try {
-    // Use the login function from authService
     const success = await login(formState.value.email, formState.value.password);
 
     if (success) {
-      // Redirect to home page on successful login
       router.push('/');
     } else {
       errorMessage.value = 'Invalid email or password';

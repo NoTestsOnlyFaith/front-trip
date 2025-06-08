@@ -8,7 +8,6 @@
     <div v-if="pending" class="text-center text-gray-500">Loading places...</div>
     <div v-else-if="error" class="text-center text-red-500">Error: {{ error.message }}</div>
     <div v-else>
-      <!-- Filters -->
       <div class="filters mb-6">
         <div class="flex flex-col md:flex-row gap-4">
           <div class="search-container flex-grow">
@@ -54,37 +53,31 @@
 </template>
 
 <script setup lang="ts">
-import { usePlacesService } from '../..//services/placesService'
+import { usePlacesService } from '../../services/placesService'
 import { ref, computed } from 'vue'
 
 const { getPlaces } = usePlacesService()
 const { data: places, pending, error } = await getPlaces()
 
-// Filter state
 const searchTerm = ref('')
 const selectedCategory = ref('')
 
-// Get unique categories for the dropdown
 const uniqueCategories = computed(() => {
   if (!places.value) return []
   const categories = places.value.map(place => place.category)
   return [...new Set(categories)].sort()
 })
 
-// Filter places based on search term and selected category
 const filteredPlaces = computed(() => {
   if (!places.value) return []
 
   return places.value.filter(place => {
-    // Filter by name (case insensitive)
-    const nameMatch = searchTerm.value === '' || 
+    const nameMatch = searchTerm.value === '' ||
       place.name.toLowerCase().includes(searchTerm.value.toLowerCase())
 
-    // Filter by category
-    const categoryMatch = selectedCategory.value === '' || 
+    const categoryMatch = selectedCategory.value === '' ||
       place.category === selectedCategory.value
 
-    // Return places that match both filters
     return nameMatch && categoryMatch
   })
 })
