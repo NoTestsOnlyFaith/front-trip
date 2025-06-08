@@ -1,6 +1,9 @@
 <template>
   <div class="places-container">
     <h1 class="text-3xl font-bold text-primary mb-8 text-center">Places</h1>
+    <div class="text-center mb-4">
+      <NuxtLink to="/places/map" class="text-primary hover:underline">View on Map</NuxtLink>
+    </div>
 
     <div v-if="pending" class="text-center text-gray-500">Loading places...</div>
     <div v-else-if="error" class="text-center text-red-500">Error: {{ error.message }}</div>
