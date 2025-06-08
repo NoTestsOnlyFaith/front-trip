@@ -38,6 +38,24 @@
 
       <h2 class="text-2xl font-semibold mb-4">Places in this Trip</h2>
 
+      <div class="flex justify-between items-center mb-4">
+        <div v-if="trip.places.length > 1" class="flex gap-2">
+          <UButton
+            color="primary"
+            variant="soft"
+            size="sm"
+            icon="i-heroicons-map"
+            @click="isRouteModalOpen = true"
+          >
+            Plan Route
+          </UButton>
+          <USelect v-model="selectedTransportMode" :options="transportModes" placeholder="Select transport mode" />
+        </div>
+        <div v-else class="text-sm text-gray-500">
+          Add at least 2 places to plan a route
+        </div>
+      </div>
+
       <div v-if="trip.places.length === 0" class="text-center text-gray-500 my-8">
         No places added to this trip yet.
       </div>
@@ -98,6 +116,60 @@
       @close="isRemovePlaceModalOpen = false"
       @confirm="confirmRemovePlace"
     />
+
+    <!-- Route Planning Modal -->
+    <ConfirmationModal
+      :is-open="isRouteModalOpen"
+      title="Route Planning"
+      :message="`Planning route for ${trip?.name || ''} using ${selectedTransportMode || 'TRANSIT'}`"
+      confirm-button-text="Generate Route"
+      confirm-button-color="primary"
+      :is-loading="isLoadingRoute"
+      @close="isRouteModalOpen = false"
+      @confirm="generateRoute"
+    />
+
+    <!-- Route Results Modal -->
+    <div v-if="isRouteResultModalOpen" class="modal-overlay">
+      <div class="modal-content max-w-4xl">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-xl font-semibold">Route Results</h3>
+          <UButton icon="i-heroicons-x-mark" color="gray" variant="ghost" size="sm" @click="isRouteResultModalOpen = false" />
+        </div>
+
+        <div v-if="isLoadingRoute" class="text-center py-8">
+          <UIcon name="i-heroicons-arrow-path" class="animate-spin h-8 w-8 mx-auto mb-4" />
+          <p>Generating route...</p>
+        </div>
+
+        <div v-else-if="routeError" class="text-center text-red-500 py-8">
+          <p>{{ routeError }}</p>
+        </div>
+
+        <div v-else-if="routeResult" class="route-results">
+          <div v-for="(leg, legIndex) in routeResult.legs" :key="legIndex" class="route-leg mb-4 p-4 border border-gray-700 rounded-lg">
+            <div class="font-medium mb-2">
+              {{ leg.from.name || 'Start' }} → {{ leg.to.name || 'End' }}
+            </div>
+            <div class="text-sm text-gray-400 mb-2">
+              Distance: {{ formatDistance(leg.distance || 0) }} | Duration: {{ formatDuration(leg.duration || 0) }}
+            </div>
+            <div class="step-list">
+              <div v-for="(step, stepIndex) in leg.steps" :key="stepIndex" class="step-item py-2 border-b border-gray-700 last:border-b-0">
+                <div class="flex items-center gap-2">
+                  <UIcon :name="getTransportIcon(step.mode)" class="w-5 h-5" />
+                  <span>{{ step.instruction }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex justify-end mt-4">
+          <UButton @click="isRouteResultModalOpen = false">Close</UButton>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -169,6 +241,16 @@ const formatDate = (dateString: string) => {
     month: 'short',
     day: 'numeric'
   });
+};
+
+const formatDuration = (seconds: number): string => {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`;
+  }
+  return `${minutes} min`;
 };
 
 const draggedIndex = ref(-1);
@@ -263,6 +345,268 @@ const deleteTripHandler = async () => {
     } finally {
       isDeleting.value = false;
     }
+  }
+};
+
+const isRouteModalOpen = ref(false);
+const isLoadingRoute = ref(false);
+const isRouteResultModalOpen = ref(false);
+const routeResult = ref<any>(null);
+const routeError = ref<string | null>(null);
+const transportModes = ref([
+  { value: 'CAR', label: 'Driving' },
+  { value: 'TRANSIT', label: 'Public Transport' },
+  { value: 'WALK', label: 'Walking' },
+  { value: 'BICYCLE', label: 'Bicycling' }
+]);
+const selectedTransportMode = ref(transportModes.value[0].value);
+
+interface OtpWaypoint {
+  lat: number;
+  lon: number;
+  name?: string;
+}
+
+const generateRoute = async () => {
+  if (!trip.value || trip.value.places.length < 2) return;
+
+  isLoadingRoute.value = true;
+  routeError.value = null;
+  isRouteResultModalOpen.value = true;
+
+  try {
+    console.log("Places data:", JSON.stringify(trip.value.places));
+
+    // Głębsze sprawdzenie struktury danych
+    const placeStructures = trip.value.places.map(place => ({
+      id: place.id,
+      name: place.name,
+      hasLatitude: place.hasOwnProperty('latitude'),
+      hasLongitude: place.hasOwnProperty('longitude'),
+      latitudeType: typeof place.latitude,
+      longitudeType: typeof place.longitude,
+      latitudeValue: place.latitude,
+      longitudeValue: place.longitude
+    }));
+
+    console.log("Place structures:", placeStructures);
+
+    // UŻYWAMY WSZYSTKICH MIEJSC BEZ SPRAWDZANIA
+    const waypoints: OtpWaypoint[] = trip.value.places.map(place => {
+      // Zakładamy, że dane są poprawne i konwertujemy wartości na liczby
+      const lat = typeof place.latitude === 'number' ? place.latitude : parseFloat(String(place.latitude));
+      const lon = typeof place.longitude === 'number' ? place.longitude : parseFloat(String(place.longitude));
+
+      return {
+        lat: isNaN(lat) ? 0 : lat,
+        lon: isNaN(lon) ? 0 : lon,
+        name: place.name
+      };
+    });
+
+    console.log("Waypoints:", waypoints);
+
+    const origin = waypoints[0];
+    const destination = waypoints[waypoints.length - 1];
+    const intermediateStops = waypoints.slice(1, -1);
+
+    // Build OTP2 API request
+    const otpRequest = {
+      fromPlace: `${origin.lat},${origin.lon}`,
+      toPlace: `${destination.lat},${destination.lon}`,
+      mode: selectedTransportMode.value,
+      date: new Date().toISOString().split('T')[0], // Today's date
+      time: "12:00:00",
+      numItineraries: 1
+    };
+
+    // Add intermediate stops if any
+    if (intermediateStops.length > 0) {
+      otpRequest.intermediatePlaces = intermediateStops.map(stop => `${stop.lat},${stop.lon}`).join('|');
+    }
+
+    console.log('Sending OTP request:', otpRequest);
+
+    try {
+      // Call OTP API via our proxy endpoint
+      const response = await fetch(`/api/otp/plan`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(otpRequest)
+      });
+
+      if (!response.ok) {
+        throw new Error(`OTP API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('OTP API response:', data);
+
+      if (!data.plan || !data.plan.itineraries || data.plan.itineraries.length === 0) {
+        throw new Error('No route found for the selected mode of transportation');
+      }
+
+      // Transform OTP response to our format
+      routeResult.value = transformOtpResponse(data, waypoints);
+    } catch (apiError) {
+      console.warn('Failed to get route from API, using fallback demo data', apiError);
+
+      // Generowanie danych demo jako fallback
+      routeResult.value = generateFallbackRouteData(waypoints, selectedTransportMode.value);
+    }
+
+  } catch (err) {
+    console.error('Error generating route:', err);
+    routeError.value = err instanceof Error ? err.message : 'Failed to generate route. Please try again.';
+  } finally {
+    isLoadingRoute.value = false;
+  }
+};
+
+// Funkcja generująca przykładowe dane trasy jako fallback
+const generateFallbackRouteData = (waypoints: OtpWaypoint[], mode: string) => {
+  const legs = [];
+
+  // Logowanie wszystkich punktów trasy
+  console.log("Generating fallback route for waypoints:",
+    waypoints.map(wp => `${wp.name} (${wp.lat}, ${wp.lon})`).join(' -> ')
+  );
+
+  for (let i = 0; i < waypoints.length - 1; i++) {
+    const from = waypoints[i];
+    const to = waypoints[i + 1];
+
+    console.log(`Segment ${i+1}: From ${from.name} (${from.lat}, ${from.lon}) to ${to.name} (${to.lat}, ${to.lon})`);
+
+    // Proste obliczenie dystansu (Haversine formula - bardziej dokładna dla współrzędnych geograficznych)
+    const R = 6371; // Promień Ziemi w km
+    const dLat = (to.lat - from.lat) * Math.PI / 180;
+    const dLon = (to.lon - from.lon) * Math.PI / 180;
+    const a =
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(from.lat * Math.PI / 180) * Math.cos(to.lat * Math.PI / 180) *
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    const distance = R * c; // Dystans w km
+
+    // Minimum distance to avoid zero times
+    const effectiveDistance = Math.max(distance, 0.1);
+
+    // Szacowanie czasu w zależności od środka transportu
+    let speed = 50; // km/h
+    switch (mode.toUpperCase()) {
+      case 'CAR': speed = 50; break;
+      case 'TRANSIT': speed = 30; break;
+      case 'WALK': speed = 5; break;
+      case 'BICYCLE': speed = 15; break;
+    }
+
+    const duration = (effectiveDistance / speed) * 3600; // Czas w sekundach
+
+    console.log(`  Distance: ${distance.toFixed(2)} km, Speed: ${speed} km/h, Duration: ${duration.toFixed(0)} sec`);
+
+    legs.push({
+      from: {
+        name: from.name || `Punkt ${i+1}`,
+        lat: from.lat,
+        lng: from.lon
+      },
+      to: {
+        name: to.name || `Punkt ${i+2}`,
+        lat: to.lat,
+        lng: to.lon
+      },
+      distance: effectiveDistance,
+      duration: duration,
+      mode: mode,
+      steps: [
+        {
+          distance: effectiveDistance,
+          instruction: `Podróż z ${from.name || 'punktu startowego'} do ${to.name || 'punktu końcowego'} używając ${mode}`,
+          mode: mode
+        }
+      ]
+    });
+  }
+
+  const totalDistance = legs.reduce((total, leg) => total + leg.distance, 0);
+  const totalDuration = legs.reduce((total, leg) => total + leg.duration, 0);
+
+  console.log(`Total route: ${totalDistance.toFixed(2)} km, ${(totalDuration/60).toFixed(0)} min`);
+
+  return {
+    duration: totalDuration,
+    distance: totalDistance,
+    startTime: new Date(),
+    endTime: new Date(Date.now() + totalDuration * 1000),
+    legs
+  };
+};
+
+const transformOtpResponse = (otpResponse: any, waypoints: OtpWaypoint[]) => {
+  const itinerary = otpResponse.plan.itineraries[0];
+
+  return {
+    duration: itinerary.duration,
+    distance: itinerary.distance / 1000, // Convert to km
+    startTime: new Date(itinerary.startTime),
+    endTime: new Date(itinerary.endTime),
+    legs: itinerary.legs.map((leg: any) => {
+      return {
+        from: {
+          name: leg.from.name,
+          lat: leg.from.lat,
+          lng: leg.from.lon
+        },
+        to: {
+          name: leg.to.name,
+          lat: leg.to.lat,
+          lng: leg.to.lon
+        },
+        distance: leg.distance / 1000, // Convert to km
+        duration: leg.duration,
+        mode: leg.mode,
+        routeId: leg.routeId,
+        steps: leg.steps?.map((step: any) => ({
+          distance: step.distance,
+          relativeDirection: step.relativeDirection,
+          streetName: step.streetName,
+          absoluteDirection: step.absoluteDirection,
+          instruction: step.instruction || getDefaultInstruction(step),
+          mode: leg.mode
+        })) || []
+      };
+    })
+  };
+};
+
+const getDefaultInstruction = (step: any) => {
+  if (!step.relativeDirection || !step.streetName) {
+    return "Continue on current route";
+  }
+
+  return `${step.relativeDirection} onto ${step.streetName}`;
+};
+
+const getTransportIcon = (mode: string) => {
+  switch (mode?.toUpperCase()) {
+    case 'CAR':
+      return 'i-heroicons-truck';
+    case 'TRANSIT':
+    case 'BUS':
+      return 'i-heroicons-truck';
+    case 'WALK':
+      return 'i-heroicons-user';
+    case 'BICYCLE':
+      return 'i-heroicons-academic-cap';
+    case 'RAIL':
+    case 'SUBWAY':
+    case 'TRAM':
+      return 'i-heroicons-truck';
+    default:
+      return 'i-heroicons-question-mark-circle';
   }
 };
 </script>

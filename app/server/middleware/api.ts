@@ -1,4 +1,4 @@
-import { defineEventHandler, createError, getRequestURL } from 'h3'
+import { defineEventHandler, createError, getRequestURL, readBody } from 'h3'
 
 interface Address {
   id: number;
@@ -75,6 +75,43 @@ export default defineEventHandler(async (event) => {
         statusCode: 500,
         statusMessage: `Internal Server Error while fetching place with id ${id}`
       })
+    }
+  }
+
+  // Handle OpenTripPlanner proxy
+  else if (pathname === '/api/otp/plan') {
+    try {
+      const body = await readBody(event);
+      console.log('[OTP Proxy] Forwarding request to OTP server with body:', body);
+
+      const response = await fetch('http://localhost:2137/otp/routers/default/plan', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+      });
+
+      if (!response.ok) {
+        console.error(`[OTP Proxy] Error from OTP server: ${response.status} ${response.statusText}`);
+        throw createError({
+          statusCode: response.status,
+          statusMessage: `Error from OTP server: ${response.statusText}`
+        });
+      }
+
+      const otpData = await response.json();
+      console.log('[OTP Proxy] Successfully received response from OTP server');
+      return otpData;
+    } catch (error: any) {
+      console.error('[OTP Proxy] Error:', error);
+      if (error.statusCode) {
+        throw error;
+      }
+      throw createError({
+        statusCode: 500,
+        statusMessage: 'Internal Server Error while proxying to OTP'
+      });
     }
   }
 
