@@ -34,14 +34,13 @@
         No places found matching your filters. TEST
       </div>
 
-      <ul v-else class="places-list">
-        <li v-for="place in filteredPlaces" :key="place.id" class="place-item">
-          <NuxtLink :to="`/places/${place.id}`" class="block hover:no-underline">
-            <div class="flex flex-col gap-2">
+      <ul v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-6 p-4">
+        <li v-for="place in filteredPlaces" :key="place.id" class="border border-gray-700 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 ease-in-out bg-gray-800 text-gray-100 hover:bg-gray-700 cursor-pointer flex flex-col h-40">
+          <NuxtLink :to="`/places/${place.id}`" class="block hover:no-underline p-4 flex-grow flex flex-col">
+            <div class="flex flex-col gap-2 flex-grow">
               <h2 class="text-xl font-semibold text-primary mb-1">{{ place.name }}</h2>
-              <div class="place-details">
+              <div class="place-details text-sm text-gray-300 mt-auto">
                 <span class="category">{{ place.category }}</span>
-                <span class="coordinates">{{ place.lat.toFixed(4) }}, {{ place.lng.toFixed(4) }}</span>
               </div>
             </div>
           </NuxtLink>
