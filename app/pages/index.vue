@@ -1,7 +1,7 @@
 <template>
   <div>
     <!-- Hero Section -->
-    <section class="flex flex-col items-center justify-center h-[70vh] gap-8">
+    <section class="flex flex-col items-center justify-center h-[90vh] gap-8">
       <h1 class="font-bold text-4xl md:text-6xl text-primary mb-2">
         Tripsemble
       </h1>
@@ -15,15 +15,53 @@
       </NuxtLink>
     </section>
 
-    <!-- About Section -->
+
+    <section class="flex flex-col items-center my-16 text-center ">
+      <h2 class="text-4xl font-semibold text-primary mb-4"> Plan with us your next trip</h2>
+      <br/>
+      <p class="text-lg md:text-2xl text-gray-600 max-w-xl text-center mb-4">
+        Find the perfect spot for your next terrace getaway. Use our tools to map out your ideal destination, whether it’s a peaceful retreat or a vibrant location with a view. Start planning with just a few clicks.
+      </p>
+      <NuxtLink to="/trips">
+        <UButton color="primary" size="lg">
+          Plan your trip
+        </UButton>
+      </NuxtLink>
+    </section>
+
+
+    <HomePageCards />
+
+    <section class="flex flex-col items-center my-16">
+      <h2 class="text-2xl font-semibold text-primary mb-4">Are you ready to start your adventure?</h2>
+      <NuxtLink to="/places">
+        <UButton color="primary" size="lg">
+          Start Exploring
+        </UButton>
+      </NuxtLink>
+    </section>
+
+
     <section class="max-w-3xl mx-auto my-16 px-4 text-center">
       <h2 class="text-2xl font-semibold text-primary mb-4">About Tripsemble</h2>
-      <p class="text-gray-700">
-        Tripsemble is your companion for discovering new destinations, planning trips, and sharing your experiences with a vibrant community of travelers. Whether you're a seasoned explorer or planning your first adventure, Tripsemble makes travel easy and fun.
+      <p class="text-gray-700 text-lg md:text-2xl text-gray-600">
+        In Tripsemble we believe great moments start with a great place. Our mission is to help you connect with unique spots and make every terrace experience unforgettable. Let us guide your next adventure.
       </p>
     </section>
 
+
+  </div>
+</template>
+<script setup lang="ts">
+
+</script>
+
+
+
+
+
     <!-- Features Section -->
+<!--
     <section class="max-w-5xl mx-auto my-16 px-4">
       <h2 class="text-2xl font-semibold text-primary text-center mb-8">Features</h2>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -44,15 +82,6 @@
         </div>
       </div>
     </section>
+-->
 
     <!-- Call to Action Section -->
-    <section class="flex flex-col items-center my-16">
-      <h2 class="text-2xl font-semibold text-primary mb-4">Ready to start your adventure?</h2>
-      <NuxtLink to="/places">
-        <UButton color="primary" size="lg">
-          Explore Places
-        </UButton>
-      </NuxtLink>
-    </section>
-  </div>
-</template>

@@ -20,6 +20,7 @@
         </div>
       </div>
 
+
       <div class="trip-meta mb-8">
         <EditableDescription
           :description="trip.description"
@@ -48,8 +49,11 @@
             @click="isRouteModalOpen = true"
           >
             Plan Route
+
           </UButton>
-          <USelect v-model="selectedTransportMode" :options="transportModes" placeholder="Select transport mode" />
+          <USelect v-model="selectedTransportMode" :items="transportModes" class="w-48" />
+
+
         </div>
         <div v-else class="text-sm text-gray-500">
           Add at least 2 places to plan a route
@@ -88,6 +92,9 @@
           </template>
         </div>
       </div>
+      
+      
+      
     </div>
     <div v-else class="text-center text-gray-500">
       Trip not found or you don't have access to view it.
@@ -189,6 +196,28 @@ onMounted(() => {
     return navigateTo('/login');
   }
 });
+
+const transportModes = ref([
+  {
+    label: 'Driving',
+    value: 'CAR'
+  },
+  {
+    label: 'Walking',
+    value: 'WALK'
+  },
+  {  label: 'Public Transport',
+    value: 'TRANSIT'
+  },
+
+  {
+    label: 'Bicycling',
+    value: 'BICYCLE'
+  }
+])
+const selectedTransportMode = ref(transportModes.value[0].value)
+
+
 
 const tripId = Array.isArray(route.params.id) ? route.params.id[0] : route.params.id;
 const { data: trip, pending, error } = await getTripById(tripId);
@@ -353,13 +382,7 @@ const isLoadingRoute = ref(false);
 const isRouteResultModalOpen = ref(false);
 const routeResult = ref<any>(null);
 const routeError = ref<string | null>(null);
-const transportModes = ref([
-  { value: 'CAR', label: 'Driving' },
-  { value: 'TRANSIT', label: 'Public Transport' },
-  { value: 'WALK', label: 'Walking' },
-  { value: 'BICYCLE', label: 'Bicycling' }
-]);
-const selectedTransportMode = ref(transportModes.value[0].value);
+
 
 interface OtpWaypoint {
   lat: number;
