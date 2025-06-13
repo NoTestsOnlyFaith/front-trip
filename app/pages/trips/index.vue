@@ -21,7 +21,7 @@
           <NuxtLink :to="`/trips/${trip.id}`" class="block hover:no-underline">
             <div class="flex flex-col gap-2">
               <h2 class="text-xl font-semibold text-primary mb-1">{{ trip.name }}</h2>
-              <p class="text-gray-600 line-clamp-2">{{ trip.description }}</p>
+              <p class="text-gray-500 line-clamp-2">{{ trip.description }}</p>
               <div class="trip-details">
                 <span class="places-count">{{ trip.places.length }} places</span>
                 <span class="created-at">{{ formatDate(trip.createdAt) }}</span>

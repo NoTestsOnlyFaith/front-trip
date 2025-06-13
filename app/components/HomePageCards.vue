@@ -26,6 +26,13 @@
         </div>
       </div>
     </div>
+    <div class="flex justify-center mt-8">
+
+    <UButton @click="drawRandomIds" color="primary" size="lg" >
+      Roll the dice <UIcon name="i-lucide-dices" class="size-5" />
+    </UButton>
+
+    </div>
   </div>
 </template>
 
@@ -33,15 +40,33 @@
 import { usePlacesService } from '../services/placesService';
 
 
-// Pobieranie danych z API
 const { getPlaces } = usePlacesService();
 const { data: places } = await getPlaces();
+const selectedIds = ref<number[]>([]);
 
-// Wyświetlaj maksymalnie 9 miejsc
+function drawRandomIds() {
+  if (!places.value) {
+    selectedIds.value = [];
+    return;
+  }
+  const ids = places.value.map(place => place.id);
+  for (let i = ids.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [ids[i], ids[j]] = [ids[j], ids[i]];
+  }
+  selectedIds.value = ids.slice(0, 12);
+}
+
+// Inicjalne losowanie po załadowaniu danych
+watch(places, (newVal) => {
+  if (newVal) drawRandomIds();
+}, { immediate: true });
+
 const displayPlaces = computed(() => {
   if (!places.value) return [];
-  return places.value.slice(0, 12);
+  return places.value.filter(place => selectedIds.value.includes(place.id));
 });
+
 
 const categoryIcons = {
   restaurant: 'lucide:utensils',
@@ -58,6 +83,8 @@ const categoryIcons = {
   historical: 'lucide:castle',
   cafe: 'lucide:coffee',
   landmark: 'lucide:map-pin',
+  archeological: 'lucide:pickaxe',
+  curtural_space: 'lucide:martini',
   default: 'lucide:map-pin'
 
 };

@@ -19,15 +19,14 @@
             >
           </div>
           <div class="category-filter border border-[rgba(0,220,130,0.2)] rounded-lg flex items-center">
-            <select
-              v-model="selectedCategory" 
-              class="w-full pl-4 pr-10 py-2 border-none focus:outline-none focus:ring-0 bg-transparent"
+            <USelect
+              v-model="selectedCategory"
+              :items="uniqueCategories"
+              placeholder="All Categories"
+              class="w-full pl-4 pr-10 py-2 border-none focus:outline-none focus:ring-0 bg-transparent custom-select"
             >
-              <option value="">All Categories</option>
-              <option v-for="category in uniqueCategories" :key="category" :value="category">
-                {{ category }}
-              </option>
-            </select>
+
+            </USelect>
           </div>
         </div>
       </div>
@@ -65,12 +64,15 @@ const selectedCategory = ref('')
 const uniqueCategories = computed(() => {
   if (!places.value) return []
   const categories = places.value.map(place => place.category)
+  categories.push("All")
   return [...new Set(categories)].sort()
 })
 
 const filteredPlaces = computed(() => {
   if (!places.value) return []
-
+  if(selectedCategory.value==="All"){
+    return places.value
+  }
   return places.value.filter(place => {
     const nameMatch = searchTerm.value === '' ||
       place.name.toLowerCase().includes(searchTerm.value.toLowerCase())
@@ -158,5 +160,33 @@ const filteredPlaces = computed(() => {
 .filters .category-filter select:focus {
   border-color: rgba(0, 220, 130, 0.5);
   box-shadow: 0 0 0 2px rgba(0, 220, 130, 0.2);
+}
+.custom-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background: transparent;
+  color: #f3f4f6;
+  cursor: pointer;
+  font-size: 1rem;
+  padding-right: 2.5em;
+}
+.category-filter {
+  position: relative;
+}
+.select-arrow {
+  position: absolute;
+  right: 1em;
+  top: 50%;
+  pointer-events: none;
+  width: 0.8em;
+  height: 0.8em;
+  border-right: 2.5px solid #00dc82cc;
+  border-bottom: 2.5px solid #00dc82cc;
+  transform: translateY(-75%) rotate(45deg);
+}
+.custom-select:focus {
+  border-color: #00dc82;
+  box-shadow: 0 0 0 2px rgba(0,220,130,0.2);
 }
 </style>
