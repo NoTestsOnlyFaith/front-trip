@@ -33,6 +33,11 @@
 </template>
 
 <script setup>
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { useAuthService } from '../services/authService';
+import axios from 'axios';
+
 const formState = ref({
   email: '',
   password: '',
@@ -42,8 +47,9 @@ const formState = ref({
 const isLoading = ref(false);
 const errorMessage = ref('');
 const router = useRouter();
+const { login } = useAuthService();
 
-const handleRegister = () => {
+const handleRegister = async () => {
   isLoading.value = true;
   errorMessage.value = '';
 
@@ -52,23 +58,42 @@ const handleRegister = () => {
     isLoading.value = false;
     return;
   }
-  
   if (formState.value.password.length < 8) {
     errorMessage.value = 'Password must be at least 8 characters';
     isLoading.value = false;
     return;
   }
-  
   if (formState.value.password !== formState.value.confirmPassword) {
     errorMessage.value = 'Passwords do not match';
     isLoading.value = false;
     return;
   }
-  
-  setTimeout(() => {
-    localStorage.setItem('registeredEmail', formState.value.email);
-    router.push('/login');
+
+  try {
+    // Rejestracja przez API
+    await axios.post('/api/Auth/register', {
+      email: formState.value.email,
+      password: formState.value.password,
+      confirmPassword: formState.value.confirmPassword,
+      name: formState.value.email.split('@')[0], // lub pobierz z dodatkowego pola
+      surname: 'User' // lub pobierz z dodatkowego pola
+    });
+    // Automatyczne logowanie po rejestracji
+    const success = await login(formState.value.email, formState.value.password);
+    if (success) {
+      router.push('/');
+    } else {
+      errorMessage.value = 'Registration succeeded, but login failed.';
+    }
+  } catch (error) {
+    // Poprawka: nie używaj TypeScriptowej składni ": any" w try/catch w pliku .vue
+    if (error && error.response && error.response.data && error.response.data.detail) {
+      errorMessage.value = error.response.data.detail;
+    } else {
+      errorMessage.value = 'Registration failed. Please try again.';
+    }
+  } finally {
     isLoading.value = false;
-  }, 1000);
+  }
 }
 </script>

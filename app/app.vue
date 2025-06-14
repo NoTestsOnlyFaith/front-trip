@@ -36,7 +36,14 @@
     </header>
 
     <main class="container mx-auto p-4">
-      <NuxtPage />
+      <Suspense>
+        <template #default>
+          <NuxtPage />
+        </template>
+        <template #fallback>
+          <PageLoading>Loading page...</PageLoading>
+        </template>
+      </Suspense>
     </main>
   </UApp>
 </template>
@@ -44,6 +51,7 @@
 <script setup>
 import { useAuthService, authStateChangeEvent } from './services/authService';
 import { ref, onMounted, onUnmounted } from 'vue';
+import PageLoading from './components/PageLoading.vue';
 
 const { isAuthenticated: checkAuth, getUser, logout: authLogout } = useAuthService();
 

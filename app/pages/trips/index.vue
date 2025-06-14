@@ -71,9 +71,14 @@ onMounted(() => {
   if (!isAuthenticated()) {
     return navigateTo('/login');
   }
+
+  console.log('Komponent trips/index.vue zamontowany, pobieranie tras...');
 });
 
 const { data: trips, pending, error } = await getTrips();
+
+// Debugowanie - sprawdź, czy trasy są poprawnie załadowane
+console.log('Odpowiedź z getTrips:', { trips: trips.value, pending: pending.value, error: error.value });
 
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
@@ -221,4 +226,3 @@ const deleteSelectedTrip = async () => {
   }
 }
 </style>
-

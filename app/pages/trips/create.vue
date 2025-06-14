@@ -144,8 +144,8 @@ const removePlace = (place: Place) => {
 };
 
 const handleSubmit = async () => {
-  if (selectedPlaces.value.length === 0) {
-    alert('Please select at least one place for your trip.');
+  if (selectedPlaces.value.length < 2) {
+    alert('Please select at least two places for your trip.');
     return;
   }
 
@@ -159,13 +159,24 @@ const handleSubmit = async () => {
   }
 
   try {
+    // Użycie nowej funkcji createTrip lub createTripWithRoutePoints
+    // Opcja 1: Format frontendowy, który obsługuje backend
     await createTrip({
       name: formState.value.name,
       description: formState.value.description,
-      places: selectedPlaces.value,
-      userId: user.email
+      places: selectedPlaces.value.map(place => ({ id: place.id }))
+      // userId już nie jest potrzebny, backend pobiera go z tokena JWT
     });
-    
+
+    // Opcja 2: Format backendowy z routePoints (możesz wybrać tę opcję zamiast powyższej)
+    /*
+    await createTripWithRoutePoints({
+      name: formState.value.name,
+      notes: formState.value.description,
+      places: selectedPlaces.value
+    });
+    */
+
     router.push('/trips');
   } catch (error) {
     console.error('Error creating trip:', error);
@@ -294,4 +305,3 @@ const handleSubmit = async () => {
   color: #f3f4f6;
 }
 </style>
-

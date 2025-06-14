@@ -9,7 +9,10 @@
       </div>
       <div class="place-details">
         <span class="category">{{ place.category }}</span>
-        <span class="coordinates">{{ place.lat.toFixed(4) }}, {{ place.lng.toFixed(4) }}</span>
+        <span class="coordinates">
+          {{ typeof place.lat === 'number' ? place.lat.toFixed(4) : (place.latitude ? Number(place.latitude).toFixed(4) : '—') }},
+          {{ typeof place.lng === 'number' ? place.lng.toFixed(4) : (place.longitude ? Number(place.longitude).toFixed(4) : '—') }}
+        </span>
       </div>
     </NuxtLink>
   </div>
