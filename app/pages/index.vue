@@ -16,7 +16,7 @@
     </section>
 
 
-    <section class="flex flex-col items-center my-16 text-center ">
+    <section class="flex flex-col items-center my-40 text-center ">
       <h2 class="text-4xl font-semibold text-primary mb-4"> Plan with us your next trip</h2>
       <br/>
       <p class="text-lg md:text-2xl text-gray-500 max-w-xl text-center mb-4">
@@ -31,23 +31,6 @@
 
 
     <HomePageCards />
-
-    <section class="flex flex-col items-center my-16">
-      <h2 class="text-3xl font-semibold text-primary mb-4">Are you ready to start your adventure?</h2>
-      <NuxtLink to="/places">
-        <UButton color="primary" size="lg">
-          Start Exploring
-        </UButton>
-      </NuxtLink>
-    </section>
-
-
-    <section class="max-w-3xl mx-auto my-16 px-4 text-center">
-      <h2 class="text-3xl font-semibold text-primary mb-4">About Tripsemble</h2>
-      <p class="text-gray-500 text-lg md:text-2xl ">
-        In Tripsemble we believe great moments start with a great place. Our mission is to help you connect with unique spots and make every terrace experience unforgettable. Let us guide your next adventure.
-      </p>
-    </section>
 
 
   </div>

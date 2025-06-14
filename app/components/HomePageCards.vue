@@ -31,6 +31,9 @@
     <UButton @click="drawRandomIds" color="primary" size="lg" >
       Roll the dice <UIcon name="i-lucide-dices" class="size-5" />
     </UButton>
+    <UButton :href="'/places/map'" color="primary" size="lg" style="margin-left: 2rem;">
+      See the map <UIcon name="i-lucide-map" class="size-5" />
+    </UButton>
 
     </div>
   </div>

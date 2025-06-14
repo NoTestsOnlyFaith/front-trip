@@ -2,7 +2,7 @@
   <!-- Suspense removed, default content moved here directly -->
   <div class="trip-detail-container">
     <div v-if="pending">Loading trip details...</div>
-    <div v-else-if="error" class="text-center text-red-500">Error: {{ error && (error as any).message }}</div>
+    <div v-else-if="error" class="text-center text-red-500"></div>
     <div v-else-if="trip">
       <div class="flex justify-between items-center mb-6">
         <div>
@@ -98,8 +98,85 @@
     <div v-else class="text-center text-gray-500">
       Trip not found or you don't have access to view it.
     </div>
+
+    <!-- Delete Trip Modal -->
+    <ConfirmationModal
+      :is-open="isDeleteModalOpen"
+      title="Delete Trip"
+      :message="trip ? `Are you sure you want to delete ${trip.name}? This action cannot be undone.` : ''"
+      confirm-button-text="Delete"
+      confirm-button-color="red"
+      :is-loading="isDeleting"
+      @close="isDeleteModalOpen = false"
+      @confirm="deleteTripHandler"
+    />
+
+    <!-- Remove Place Modal -->
+    <ConfirmationModal
+      :is-open="isRemovePlaceModalOpen"
+      title="Remove Place"
+      :message="placeToRemove ? `Are you sure you want to remove ${placeToRemove.name} from this trip?` : ''"
+      confirm-button-text="Remove"
+      confirm-button-color="red"
+      :is-loading="isRemovingPlace"
+      @close="isRemovePlaceModalOpen = false"
+      @confirm="confirmRemovePlace"
+    />
+
+    <!-- Route Planning Modal -->
+    <ConfirmationModal
+      :is-open="isRouteModalOpen"
+      title="Route Planning"
+      :message="`Planning route for ${trip?.name || ''} using ${selectedTransportMode || 'TRANSIT'}`"
+      confirm-button-text="Generate Route"
+      confirm-button-color="primary"
+      :is-loading="isLoadingRoute"
+      @close="isRouteModalOpen = false"
+      @confirm="generateRoute"
+    />
+
+    <!-- Route Results Modal -->
+    <div v-if="isRouteResultModalOpen" class="modal-overlay">
+      <div class="modal-content max-w-4xl">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-xl font-semibold">Route Results</h3>
+          <UButton icon="i-heroicons-x-mark" color="gray" variant="ghost" size="sm" @click="isRouteResultModalOpen = false" />
+        </div>
+
+        <div v-if="isLoadingRoute" class="text-center py-8">
+          <UIcon name="i-heroicons-arrow-path" class="animate-spin h-8 w-8 mx-auto mb-4" />
+          <p>Generating route...</p>
+        </div>
+
+        <div v-else-if="routeError" class="text-center text-red-500 py-8">
+          <p>{{ routeError }}</p>
+        </div>
+
+        <div v-else-if="routeResult" class="route-results">
+          <div v-for="(leg, legIndex) in routeResult.legs" :key="legIndex" class="route-leg mb-4 p-4 border border-gray-700 rounded-lg">
+            <div class="font-medium mb-2">
+              {{ leg.from.name || 'Start' }} → {{ leg.to.name || 'End' }}
+            </div>
+            <div class="text-sm text-gray-400 mb-2">
+              Distance: {{ formatDistance(leg.distance || 0) }} | Duration: {{ formatDuration(leg.duration || 0) }}
+            </div>
+            <div class="step-list">
+              <div v-for="(step, stepIndex) in leg.steps" :key="stepIndex" class="step-item py-2 border-b border-gray-700 last:border-b-0">
+                <div class="flex items-center gap-2">
+                  <UIcon :name="getTransportIcon(step.mode)" class="w-5 h-5" />
+                  <span>{{ step.instruction }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex justify-end mt-4">
+          <UButton @click="isRouteResultModalOpen = false">Close</UButton>
+        </div>
+      </div>
+    </div>
   </div>
-  <!-- ...existing code for modals inside default template... -->
 </template>
 
 <script setup lang="ts">
@@ -156,7 +233,7 @@ watch(trip, () => {
     editName.value = trip.value.name;
     editDescription.value = trip.value.description;
   }
-});
+}, { immediate: true });
 
 const startEditAll = () => { isEditingPage.value = true; };
 const cancelEditAll = () => {
